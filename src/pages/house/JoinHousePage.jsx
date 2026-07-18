@@ -20,7 +20,7 @@ function JoinHousePage() {
 
         // 3. 백엔드 연결 전 임시 통과 처리
         alert("하우스 입장에 성공했습니다! 🎉");
-        navigate("/main"); // 가입 성공 후 메인 화면으로 이동
+        navigate("/home"); // 가입 성공 후 홈 화면으로 이동
     }
 
     return(

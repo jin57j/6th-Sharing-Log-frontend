@@ -1,44 +1,58 @@
 import { Routes, Route } from "react-router";
+
 import LoginPage from "./pages/auth/LoginPage";
 import SelectHousePage from "./pages/house/SelectHousePage";
 import CreateHousePage from "./pages/house/CreateHousePage";
 import InviteHousePage from "./pages/house/InviteHousePage";
 import JoinHousePage from "./pages/house/JoinHousePage";
-import MainPage from "./pages/main/MainPage";
+// 로그인 및 하우스 생성, 출입
+
+import Layout from "./components/Layout";
+import Home from "./pages/dashboard/Home";
+import Rotation from "./pages/dashboard/Rotation";
+// 메인 대시보드
 
 function App() {
   return (
     <Routes>
 
       <Route
-      path="/"
-      element={<LoginPage />}
+        path="/"
+        element={<LoginPage />}
       />
 
       <Route
-      path="/house-choice"
-      element={<SelectHousePage />}
+        path="/house-choice"
+        element={<SelectHousePage />}
       />
 
       <Route
-      path="/create-house"
-      element={<CreateHousePage />}
+        path="/create-house"
+        element={<CreateHousePage />}
       />
 
       <Route
-      path="/invite-house"
-      element={<InviteHousePage />}
+        path="/invite-house"
+        element={<InviteHousePage />}
       />
 
       <Route
-      path="/join-house"
-      element={<JoinHousePage />}
+        path="/join-house"
+        element={<JoinHousePage />}
       />
 
-      <Route
-      path="/main"
-      element={<MainPage />}
-      />
+      {/* 대시보드 영역(Layout으로 감싼 부분) */}
+      <Route element={<Layout />}>
+        <Route
+          path="/home"
+          element={<Home />}
+        />
+
+        <Route
+          path="/rotation"
+          element={<Rotation />}
+        />
+      </Route>
 
     </Routes>
   );

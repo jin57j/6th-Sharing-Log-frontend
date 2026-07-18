@@ -21,7 +21,7 @@ function InviteHousePage() {
     // 메인 하우스로 들어가는 기능
     function handleStartHouse() {
         console.log("메인 화면으로 이동");
-        navigate("/main")
+        navigate("/home")
     }
 
     return(
