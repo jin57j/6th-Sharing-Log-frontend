@@ -13,7 +13,7 @@ function InviteHousePage() {
         .then(() => {
             alert("초대코드가 복사되었습니다! 🎉");
         })
-        .catch((err) => {
+        .catch(() => {
             alert("복사에 실패했습니다");
         });
     }

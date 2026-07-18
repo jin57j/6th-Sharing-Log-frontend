@@ -4,8 +4,8 @@ import { useNavigate } from "react-router";
 function CreateHousePage() {
     const navigate = useNavigate();
 
-    const [houseName, sethouseName] = useState("");
-    const [address, setaddress] = useState("");
+    const [houseName, setHouseName] = useState("");
+    const [address, setAddress] = useState("");
 
     function handleSubmit(e) {
         e.preventDefault()
@@ -28,7 +28,7 @@ function CreateHousePage() {
                     id="house-name"
                     type="text"
                     value={houseName}
-                    onChange={(e) => sethouseName(e.target.value)}
+                    onChange={(e) => setHouseName(e.target.value)}
                     placeholder="예: 강남 쉐어하우스"
                     required
                     />
@@ -41,7 +41,7 @@ function CreateHousePage() {
                     id="house-address"
                     type="text"
                     value={address}
-                    onChange={(e) => setaddress(e.target.value)}
+                    onChange={(e) => setAddress(e.target.value)}
                     placeholder="예: 서울시 강남구 역삼동"
                     />
                 </div>

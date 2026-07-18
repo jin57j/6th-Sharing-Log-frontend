@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router";
 import LoginPage from "./pages/auth/LoginPage";
-import HouseChoicePage from "./pages/house/SelectHousePage";
+import SelectHousePage from "./pages/house/SelectHousePage";
 import CreateHousePage from "./pages/house/CreateHousePage";
 import InviteHousePage from "./pages/house/InviteHousePage";
 import JoinHousePage from "./pages/house/JoinHousePage";
@@ -17,7 +17,7 @@ function App() {
 
       <Route
       path="/house-choice"
-      element={<HouseChoicePage />}
+      element={<SelectHousePage />}
       />
 
       <Route

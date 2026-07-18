@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 
-function HouseChoicePage() {
+function SelectHousePage() {
     return(
         <main>
             <h1>어떻게 시작할까요?</h1>
@@ -23,4 +23,4 @@ function HouseChoicePage() {
     );
 }
 
-export default HouseChoicePage;
+export default SelectHousePage;
