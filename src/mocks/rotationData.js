@@ -39,7 +39,7 @@ export const mockTasks = [
         name: "쓰레기 버리기",
         icon: "🗑️",
         frequency: "DAILY",
-        startAssigneeId: 2,
+        startAssigneeId: 4,
         rotationMemberIds: [1, 2, 3, 4],
     },
     {
@@ -48,7 +48,7 @@ export const mockTasks = [
         icon: "♻️",
         frequency: "BIWEEKLY",
         startAssigneeId: 3,
-        rotationMemberIds: [1, 2, 4],
+        rotationMemberIds: [1, 3, 4],
    },
 ]
 
