@@ -2,7 +2,7 @@ import { mockMyTasks, mockNotices } from "../../mocks/homeData";
 
 // 두가지는 컴포넌트로 분리해둠
 import TaskCard from "../../components/TaskCard";
-import NoticeItem from "../../components/NoiceItem";
+import NoticeItem from "../../components/NoticeItem";
 
 function Home() {
     const userName = "지수";
@@ -10,7 +10,7 @@ function Home() {
      // 임시로 하드코딩
 
     return(
-        <main>
+        <div>
             <header>
                 <p>{today}</p>
                 <h1>안녕하세요, {userName}님 👋</h1>
@@ -47,7 +47,7 @@ function Home() {
                     ))}
                 </ul>
             </section>
-        </main>
+        </div>
     );
 }
 
