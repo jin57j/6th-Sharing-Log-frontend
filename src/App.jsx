@@ -10,50 +10,32 @@ import JoinHousePage from "./pages/house/JoinHousePage";
 import Layout from "./components/Layout";
 import Home from "./pages/dashboard/Home";
 import Rotation from "./pages/dashboard/Rotation";
+import Task from "./pages/dashboard/Task";
+import Reservation from "./pages/dashboard/Reservation";
 // 메인 대시보드
 
 function App() {
   return (
     <Routes>
+      <Route path="/" element={<LoginPage />} />
 
-      <Route
-        path="/"
-        element={<LoginPage />}
-      />
+      <Route path="/house-choice" element={<SelectHousePage />} />
 
-      <Route
-        path="/house-choice"
-        element={<SelectHousePage />}
-      />
+      <Route path="/create-house" element={<CreateHousePage />} />
 
-      <Route
-        path="/create-house"
-        element={<CreateHousePage />}
-      />
+      <Route path="/invite-house" element={<InviteHousePage />} />
 
-      <Route
-        path="/invite-house"
-        element={<InviteHousePage />}
-      />
-
-      <Route
-        path="/join-house"
-        element={<JoinHousePage />}
-      />
+      <Route path="/join-house" element={<JoinHousePage />} />
 
       {/* 대시보드 영역(Layout으로 감싼 부분) */}
       <Route element={<Layout />}>
-        <Route
-          path="/home"
-          element={<Home />}
-        />
+        <Route path="/home" element={<Home />} />
 
-        <Route
-          path="/rotation"
-          element={<Rotation />}
-        />
+        <Route path="/rotation" element={<Rotation />} />
+        <Route path="/task" element={<Task />} />
+
+        <Route path="/reservation" element={<Reservation />} />
       </Route>
-
     </Routes>
   );
 }
