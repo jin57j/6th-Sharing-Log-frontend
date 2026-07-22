@@ -17,25 +17,90 @@ function JoinHousePage() {
     setErrorMessage("");
   }
 
-  function handleSubmit(event) {
+  async function getCsrfToken() {
+    const response = await fetch("/api/auth/csrf", {
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("보안 토큰을 가져오지 못했습니다.");
+    }
+
+    return response.json();
+  }
+
+  async function getErrorMessage(response) {
+    const contentType = response.headers.get("content-type") ?? "";
+
+    if (contentType.includes("application/json")) {
+      const body = await response.json();
+      return (
+        body.detail ??
+        body.message ??
+        body.error ??
+        "하우스 참가에 실패했습니다."
+      );
+    }
+
+    return response.status === 401 || response.redirected
+      ? "로그인 후 다시 시도해 주세요."
+      : "초대코드를 확인하거나 관리자에게 새 코드를 요청해 주세요.";
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const isValidCode =
-      /^[A-Za-z0-9_-]{22}$/.test(cleanCode);
+    const isValidCode = /^[A-Za-z0-9_-]{22}$/.test(cleanCode);
 
     if (!isValidCode) {
       setErrorMessage(
-        "영문, 숫자, -, _로 이루어진 22자리 코드를 입력해 주세요."
+        "영문, 숫자, -, _로 이루어진 22자리 코드를 입력해 주세요.",
       );
       return;
     }
 
-    setErrorMessage("");
-    setIsJoining(true);
+    try {
+      setErrorMessage("");
+      setIsJoining(true);
 
-    window.setTimeout(() => {
-      navigate("/home");
-    }, 900);
+      const csrf = await getCsrfToken();
+
+      const response = await fetch(
+        `/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            [csrf.headerName]: csrf.token,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(await getErrorMessage(response));
+      }
+
+      const joinedGroup = await response.json();
+
+      navigate("/home", {
+        replace: true,
+        state: {
+          groupId: joinedGroup.groupId,
+          houseName: joinedGroup.groupName,
+          role: joinedGroup.role,
+        },
+      });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "하우스 참가에 실패했습니다.",
+      );
+    } finally {
+      setIsJoining(false);
+    }
   }
 
   return (
@@ -63,18 +128,13 @@ function JoinHousePage() {
           className="rounded-[28px] border border-[#1A1428]/10 bg-white p-7 shadow-xl"
         >
           <div className="flex items-center justify-between">
-            <label
-              htmlFor="invite-code-input"
-              className="text-sm font-bold"
-            >
+            <label htmlFor="invite-code-input" className="text-sm font-bold">
               초대코드
             </label>
 
             <span
               className={`text-[11px] font-bold ${
-                cleanCode.length === 22
-                  ? "text-[#06D6A0]"
-                  : "text-[#8B8575]"
+                cleanCode.length === 22 ? "text-[#06D6A0]" : "text-[#8B8575]"
               }`}
             >
               {cleanCode.length}/22

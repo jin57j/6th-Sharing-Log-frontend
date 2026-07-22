@@ -1,8 +1,5 @@
-import { useState } from "react";
-import {
-  useLocation,
-  useNavigate,
-} from "react-router";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 import OnboardingShell from "../../components/OnboardingShell";
 
@@ -10,7 +7,7 @@ import OnboardingShell from "../../components/OnboardingShell";
 function makeReadableCode(code) {
   return code.match(/.{1,4}/g)?.join(" ") ?? code;
 }
-// 만료 날짜(ISO 문자열)를 받아 읽기 쉬운 한국어 문장으로 변환하는 함수
+
 function formatExpiry(value) {
   const date = new Date(value);
 
@@ -32,29 +29,43 @@ function InviteHousePage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [copied, setCopied] = useState(false);
+  const [copiedTarget, setCopiedTarget] = useState(null);
 
-  const inviteCode =
-    location.state?.inviteCode ??
-    "ShLogInviteCode2026001";
-
+  const houseName = location.state?.houseName;
+  const inviteCode = location.state?.inviteCode;
+  const inviteUrl = location.state?.inviteUrl;
   const expiresAt = location.state?.expiresAt;
 
-  async function handleCopyCode() {
+  useEffect(() => {
+    if (!inviteCode || !inviteUrl) {
+      navigate("/create-house", { replace: true });
+    }
+  }, [inviteCode, inviteUrl, navigate]);
+
+  if (!inviteCode || !inviteUrl) {
+    return null;
+  }
+
+  async function copy(value, target) {
     try {
-      await navigator.clipboard.writeText(inviteCode);
-      setCopied(true);
+      await navigator.clipboard.writeText(value);
+      setCopiedTarget(target);
 
       window.setTimeout(() => {
-        setCopied(false);
+        setCopiedTarget(null);
       }, 2000);
     } catch {
-      alert("초대코드를 복사하지 못했어요.");
+      alert("복사하지 못했어요. 다시 시도해 주세요.");
     }
   }
 
   function handleStartHouse() {
-    navigate("/home");
+    navigate("/home", {
+      state: {
+        groupId: location.state?.groupId,
+        houseName,
+      },
+    });
   }
 
   return (
@@ -72,8 +83,12 @@ function InviteHousePage() {
             하우스가 만들어졌어요!
           </h1>
 
+          {houseName && (
+            <p className="mt-2 text-sm font-bold text-[#1A1428]">{houseName}</p>
+          )}
+
           <p className="mt-2 text-sm text-[#8B8575]">
-            아래 초대코드를 멤버에게 공유해요
+            아래 초대 링크를 멤버에게 공유해요
           </p>
         </header>
 
@@ -90,18 +105,34 @@ function InviteHousePage() {
 
           <button
             type="button"
-            onClick={handleCopyCode}
-            className={`mb-4 flex w-full items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-bold transition ${
-              copied
+            onClick={() => copy(inviteCode, "code")}
+            className={`mb-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-bold transition ${
+              copiedTarget === "code"
                 ? "border-[#06D6A0] bg-[#06D6A0]/10 text-[#176555]"
                 : "border-[#1A1428]/10 hover:bg-[#EFEBE2]"
             }`}
           >
             <span aria-hidden="true">
-              {copied ? "✅" : "📋"}
+              {copiedTarget === "code" ? "✅" : "📋"}
             </span>
+            {copiedTarget === "code" ? "코드가 복사됐어요!" : "코드 복사하기"}
+          </button>
 
-            {copied ? "복사됐어요!" : "코드 복사하기"}
+          <button
+            type="button"
+            onClick={() => copy(inviteUrl, "link")}
+            className={`mb-5 flex w-full items-center justify-center gap-2 rounded-xl border-2 py-3 text-sm font-bold transition ${
+              copiedTarget === "link"
+                ? "border-[#06D6A0] bg-[#06D6A0]/10 text-[#176555]"
+                : "border-[#1A1428]/10 hover:bg-[#EFEBE2]"
+            }`}
+          >
+            <span aria-hidden="true">
+              {copiedTarget === "link" ? "✅" : "🔗"}
+            </span>
+            {copiedTarget === "link"
+              ? "초대 링크가 복사됐어요!"
+              : "초대 링크 복사하기"}
           </button>
 
           <div className="mb-5 rounded-xl bg-[#FFB703]/15 px-4 py-3 text-left">
@@ -115,8 +146,7 @@ function InviteHousePage() {
           </div>
 
           <p className="mb-5 text-[11px] leading-5 text-[#8B8575]">
-            멤버가 앱에서 “하우스에 참가하고 싶어요”를
-            선택한 뒤 이 코드를 입력하면 돼요.
+            초대 링크를 연 멤버는 로그인 후 하우스 참가를 완료할 수 있어요.
           </p>
 
           <button

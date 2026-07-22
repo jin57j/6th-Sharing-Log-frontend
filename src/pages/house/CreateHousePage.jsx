@@ -3,30 +3,55 @@ import { useNavigate } from "react-router";
 
 import OnboardingShell from "../../components/OnboardingShell";
 
+
 function CreateHousePage() {
   const navigate = useNavigate();
 
   const [houseName, setHouseName] = useState("");
   const [address, setAddress] = useState("");
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const inviteCode = "ShLogInviteCode2026001";
-    const expiresAt = new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    ).toISOString();
+    const csrf = await fetch("/api/auth/csrf", {
+      credentials: "include",
+    }).then((response) => response.json());
 
-    console.log("입력한 하우스 정보:", {
-      houseName,
-      address,
+    const headers = {
+      "Content-Type": "application/json",
+      [csrf.headerName]: csrf.token,
+    };
+
+    const group = await fetch("/api/groups", {
+      method: "POST",
+      credentials: "include",
+      headers,
+      body: JSON.stringify({
+        name: houseName.trim(),
+      }),
+    }).then(async (response) => {
+      if (!response.ok) throw new Error("하우스 생성에 실패했습니다.");
+      return response.json();
+    });
+
+    const invitation = await fetch(`/api/groups/${group.groupId}/invitations`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        [csrf.headerName]: csrf.token,
+      },
+    }).then(async (response) => {
+      if (!response.ok) throw new Error("초대 링크 생성에 실패했습니다.");
+      return response.json();
     });
 
     navigate("/invite-house", {
       state: {
-        houseName,
-        inviteCode,
-        expiresAt,
+        houseName: group.name,
+        groupId: group.groupId,
+        inviteCode: invitation.code,
+        inviteUrl: invitation.inviteUrl,
+        expiresAt: invitation.expiresAt,
       },
     });
   }
@@ -60,17 +85,14 @@ function CreateHousePage() {
               htmlFor="house-name"
               className="mb-2 block text-sm font-bold"
             >
-              하우스 이름{" "}
-              <span className="text-[#E63946]">*</span>
+              하우스 이름 <span className="text-[#E63946]">*</span>
             </label>
 
             <input
               id="house-name"
               type="text"
               value={houseName}
-              onChange={(event) =>
-                setHouseName(event.target.value)
-              }
+              onChange={(event) => setHouseName(event.target.value)}
               placeholder="예: 강남 쉐어하우스"
               maxLength={50}
               required
@@ -84,18 +106,14 @@ function CreateHousePage() {
               className="mb-2 block text-sm font-bold"
             >
               주소{" "}
-              <span className="text-xs font-normal text-[#8B8575]">
-                (선택)
-              </span>
+              <span className="text-xs font-normal text-[#8B8575]">(선택)</span>
             </label>
 
             <input
               id="house-address"
               type="text"
               value={address}
-              onChange={(event) =>
-                setAddress(event.target.value)
-              }
+              onChange={(event) => setAddress(event.target.value)}
               placeholder="예: 서울시 강남구 역삼동"
               className="w-full rounded-xl border border-[#1A1428]/10 bg-[#EFEBE2]/40 px-4 py-3 text-sm outline-none transition placeholder:text-[#8B8575]/70 focus:border-[#E63946]/40 focus:ring-2 focus:ring-[#E63946]/20"
             />
