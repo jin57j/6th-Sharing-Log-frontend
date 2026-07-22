@@ -38,11 +38,7 @@ function InviteHousePage() {
     location.state?.inviteCode ??
     "ShLogInviteCode2026001";
 
-  const expiresAt =
-    location.state?.expiresAt ??
-    new Date(
-      Date.now() + 24 * 60 * 60 * 1000
-    ).toISOString();
+  const expiresAt = location.state?.expiresAt;
 
   async function handleCopyCode() {
     try {
@@ -114,7 +110,7 @@ function InviteHousePage() {
             </p>
 
             <p className="mt-1 text-[11px] text-[#8B8575]">
-              {formatExpiry(expiresAt)} 만료
+              {expiresAt ? formatExpiry(expiresAt) : "24시간 후"} 만료
             </p>
           </div>
 
