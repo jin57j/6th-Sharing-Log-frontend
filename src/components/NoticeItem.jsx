@@ -1,3 +1,4 @@
+// 메인화면 공지 컴포넌트
 function NoticeItem({ notice }) {
     return (
         <li>

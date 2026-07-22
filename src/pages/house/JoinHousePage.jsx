@@ -1,69 +1,149 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import OnboardingShell from "../../components/OnboardingShell";
+
 function JoinHousePage() {
-  const [typedCode, setTypedCode] = useState("");
   const navigate = useNavigate();
 
-  function handleSubmit(e) {
-    e.preventDefault();
+  const [typedCode, setTypedCode] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
-    // 1. 공백 제거 및 대문자 변환 (사용자 편의성 위함)
-    const cleanCode = typedCode.trim().toUpperCase();
-    console.log("입력된 초대코드:", cleanCode);
+  const cleanCode = typedCode.trim();
 
-    // 2. 임시 유효성 검사 (6자리 코드가 맞는지 확인)
-    if (cleanCode.length !== 6) {
-      alert("초대코드는 6자리여야 합니다. 다시 확인해 주세요! 🔍");
+  function handleInputChange(event) {
+    setTypedCode(event.target.value);
+    setErrorMessage("");
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const isValidCode =
+      /^[A-Za-z0-9_-]{22}$/.test(cleanCode);
+
+    if (!isValidCode) {
+      setErrorMessage(
+        "영문, 숫자, -, _로 이루어진 22자리 코드를 입력해 주세요."
+      );
       return;
     }
 
-    // 3. 백엔드 연결 전 임시 통과 처리
-    alert("하우스 입장에 성공했습니다! 🎉");
-    navigate("/home"); // 가입 성공 후 홈 화면으로 이동
+    setErrorMessage("");
+    setIsJoining(true);
+
+    window.setTimeout(() => {
+      navigate("/home");
+    }, 900);
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#f7f6f2] p-8 box-border font-sans">
-      {/* 폼 전체를 감싸는 화이트 카드 */}
-      <div className="bg-white flex flex-col items-center text-center py-10 px-6 sm:px-8 rounded-[24px] border border-[#f0f0f5] shadow-[0_8px_24px_rgba(0,0,0,0.04)] w-full max-w-[400px]">
-        <span className="text-4xl mb-4">🏠</span>
-        <h1 className="text-[#1a1a24] text-2xl font-extrabold m-0 mb-2 break-keep">
-          하우스 참여하기
-        </h1>
-        <p className="text-[#8b8b99] text-sm m-0 mb-8 break-keep">
-          공유받은 6자리 초대코드를 입력해 주세요.
-        </p>
+    <OnboardingShell>
+      <div className="relative w-full max-w-sm">
+        <header className="mb-6 text-center">
+          <div
+            className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#06D6A0]/15 text-2xl"
+            aria-hidden="true"
+          >
+            🤝
+          </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
-          <div className="flex flex-col text-left gap-2">
+          <h1 className="font-display text-2xl font-black tracking-[-0.03em]">
+            하우스 참가하기
+          </h1>
+
+          <p className="mt-1.5 text-sm text-[#8B8575]">
+            하우스 관리자에게 초대코드를 받아 입력해요
+          </p>
+        </header>
+
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-[28px] border border-[#1A1428]/10 bg-white p-7 shadow-xl"
+        >
+          <div className="flex items-center justify-between">
             <label
               htmlFor="invite-code-input"
-              className="text-[#1a1a24] text-sm font-bold ml-1"
+              className="text-sm font-bold"
             >
-              초대코드 입력
+              초대코드
             </label>
-            <input
-              id="invite-code-input"
-              type="text"
-              value={typedCode}
-              onChange={(e) => setTypedCode(e.target.value.toUpperCase())}
-              placeholder="예: DT6K9P"
-              maxLength="6"
-              required
-              className="w-full bg-[#f9f9fb] border border-[#e5e5ea] rounded-xl px-4 py-3.5 text-xl text-center tracking-[0.2em] font-bold text-[#1a1a24] outline-none focus:border-[#a8a8b3] focus:ring-1 focus:ring-[#a8a8b3] transition-all placeholder:text-[#c4c4cc] placeholder:font-medium placeholder:tracking-normal"
-            />
+
+            <span
+              className={`text-[11px] font-bold ${
+                cleanCode.length === 22
+                  ? "text-[#06D6A0]"
+                  : "text-[#8B8575]"
+              }`}
+            >
+              {cleanCode.length}/22
+            </span>
           </div>
+
+          <input
+            id="invite-code-input"
+            type="text"
+            value={typedCode}
+            onChange={handleInputChange}
+            placeholder="22자리 초대코드"
+            maxLength={22}
+            autoComplete="off"
+            spellCheck={false}
+            disabled={isJoining}
+            required
+            className={`mt-2 w-full rounded-xl border bg-[#EFEBE2]/40 px-4 py-3.5 text-center font-mono text-base font-black tracking-[0.08em] outline-none transition placeholder:text-sm placeholder:font-normal placeholder:tracking-normal placeholder:text-[#8B8575]/70 focus:ring-2 focus:ring-[#E63946]/20 ${
+              errorMessage
+                ? "border-[#E63946]"
+                : "border-[#1A1428]/10 focus:border-[#E63946]/40"
+            }`}
+          />
+
+          {errorMessage && (
+            <p
+              role="alert"
+              className="mt-2 text-xs font-semibold leading-5 text-[#E63946]"
+            >
+              {errorMessage}
+            </p>
+          )}
+
+          <p className="mt-3 text-xs leading-5 text-[#8B8575]">
+            발급받은 코드를 공백 없이 입력해 주세요.
+          </p>
 
           <button
             type="submit"
-            className="w-full bg-[#1a1a24] hover:bg-[#2d2d3a] text-white font-semibold py-3.5 px-6 rounded-xl text-[16px] transition-colors duration-200 mt-2"
+            disabled={!cleanCode || isJoining}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E63946] py-3.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            하우스 입장하기
+            {isJoining ? (
+              <>
+                <span
+                  className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  aria-hidden="true"
+                />
+                참가 중...
+              </>
+            ) : (
+              <>
+                하우스 참가하기
+                <span aria-hidden="true">›</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={isJoining}
+            className="mt-3 w-full rounded-xl py-3 text-sm font-semibold text-[#8B8575] transition hover:text-[#1A1428]"
+          >
+            ← 뒤로 가기
           </button>
         </form>
       </div>
-    </main>
+    </OnboardingShell>
   );
 }
 

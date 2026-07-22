@@ -1,79 +1,117 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import OnboardingShell from "../../components/OnboardingShell";
+
 function CreateHousePage() {
   const navigate = useNavigate();
 
   const [houseName, setHouseName] = useState("");
   const [address, setAddress] = useState("");
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    console.log("제출된 데이터:", { houseName, address });
-    navigate("/invite-house");
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const inviteCode = "ShLogInviteCode2026001";
+    const expiresAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000
+    ).toISOString();
+
+    console.log("입력한 하우스 정보:", {
+      houseName,
+      address,
+    });
+
+    navigate("/invite-house", {
+      state: {
+        houseName,
+        inviteCode,
+        expiresAt,
+      },
+    });
   }
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-[#f7f6f2] p-8 box-border font-sans">
-      {/* 폼 전체를 감싸는 화이트 카드 */}
-      <div className="bg-white flex flex-col items-center text-center py-10 px-6 sm:px-8 rounded-[24px] border border-[#f0f0f5] shadow-[0_8px_24px_rgba(0,0,0,0.04)] w-full max-w-[400px]">
-        <span className="text-4xl mb-4">✨</span>
-        <h1 className="text-[#1a1a24] text-2xl font-extrabold m-0 mb-2 break-keep">
-          새 하우스 만들기
-        </h1>
-        <p className="text-[#8b8b99] text-sm m-0 mb-8 break-keep">
-          하우스 정보를 입력하면 초대코드가 생성돼요
-        </p>
+    <OnboardingShell>
+      <div className="relative w-full max-w-sm">
+        <header className="mb-6 text-center">
+          <div
+            className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E63946]/10 text-2xl"
+            aria-hidden="true"
+          >
+            ✨
+          </div>
 
-        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-5">
-          {/* 하우스 이름 (필수정보) */}
-          <div className="flex flex-col text-left gap-2">
+          <h1 className="font-display text-2xl font-black tracking-[-0.03em]">
+            새 하우스 만들기
+          </h1>
+
+          <p className="mt-1.5 text-sm text-[#8B8575]">
+            하우스 정보를 입력하면 초대코드가 생성돼요
+          </p>
+        </header>
+
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5 rounded-[28px] border border-[#1A1428]/10 bg-white p-7 shadow-xl"
+        >
+          <div>
             <label
               htmlFor="house-name"
-              className="text-[#1a1a24] text-sm font-bold ml-1"
+              className="mb-2 block text-sm font-bold"
             >
-              하우스 이름 <span className="text-red-500">*</span>
+              하우스 이름{" "}
+              <span className="text-[#E63946]">*</span>
             </label>
+
             <input
               id="house-name"
               type="text"
               value={houseName}
-              onChange={(e) => setHouseName(e.target.value)}
+              onChange={(event) =>
+                setHouseName(event.target.value)
+              }
               placeholder="예: 강남 쉐어하우스"
+              maxLength={50}
               required
-              className="w-full bg-[#f9f9fb] border border-[#e5e5ea] rounded-xl px-4 py-3.5 text-base text-[#1a1a24] outline-none focus:border-[#a8a8b3] focus:ring-1 focus:ring-[#a8a8b3] transition-all placeholder:text-[#c4c4cc] placeholder:font-medium"
+              className="w-full rounded-xl border border-[#1A1428]/10 bg-[#EFEBE2]/40 px-4 py-3 text-sm outline-none transition placeholder:text-[#8B8575]/70 focus:border-[#E63946]/40 focus:ring-2 focus:ring-[#E63946]/20"
             />
           </div>
 
-          {/* 하우스 주소 (선택정보) */}
-          <div className="flex flex-col text-left gap-2">
+          <div>
             <label
               htmlFor="house-address"
-              className="text-[#1a1a24] text-sm font-bold ml-1"
+              className="mb-2 block text-sm font-bold"
             >
-              하우스 주소{" "}
-              <span className="text-[#8b8b99] font-normal text-xs">(선택)</span>
+              주소{" "}
+              <span className="text-xs font-normal text-[#8B8575]">
+                (선택)
+              </span>
             </label>
+
             <input
               id="house-address"
               type="text"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={(event) =>
+                setAddress(event.target.value)
+              }
               placeholder="예: 서울시 강남구 역삼동"
-              className="w-full bg-[#f9f9fb] border border-[#e5e5ea] rounded-xl px-4 py-3.5 text-base text-[#1a1a24] outline-none focus:border-[#a8a8b3] focus:ring-1 focus:ring-[#a8a8b3] transition-all placeholder:text-[#c4c4cc] placeholder:font-medium"
+              className="w-full rounded-xl border border-[#1A1428]/10 bg-[#EFEBE2]/40 px-4 py-3 text-sm outline-none transition placeholder:text-[#8B8575]/70 focus:border-[#E63946]/40 focus:ring-2 focus:ring-[#E63946]/20"
             />
           </div>
 
-          {/* 하우스 만들기 완료 버튼 */}
           <button
             type="submit"
-            className="w-full bg-[#1a1a24] hover:bg-[#2d2d3a] text-white font-semibold py-3.5 px-6 rounded-xl text-[16px] transition-colors duration-200 mt-4"
+            disabled={!houseName.trim()}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#E63946] py-3.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             하우스 만들기
+            <span aria-hidden="true">›</span>
           </button>
         </form>
       </div>
-    </main>
+    </OnboardingShell>
   );
 }
 
