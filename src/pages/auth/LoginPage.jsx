@@ -1,11 +1,20 @@
-import { useNavigate } from "react-router";
 import googleIcon from "../../assets/images/google-icon.svg";
 
 function LoginPage() {
-  const navigate = useNavigate();
-
   function handleLogin() {
-    navigate("/house-choice");
+    // 1. 환경 변수에서 백엔드 서버 주소를 가져옵니다. (예: .env 파일에 VITE_API_BASE_URL 설정 필요)
+    const backendUrl = import.meta.env.VITE_API_BASE_URL;
+
+    if (!backendUrl) {
+      console.error(
+        "백엔드 서버 주소(VITE_API_BASE_URL)가 설정되지 않았습니다.",
+      );
+      return;
+    }
+
+    // 2. 백엔드의 구글 로그인 엔드포인트로 이동합니다.
+    // (백엔드 개발자와 논의한 경로가 다를 경우 /api/auth/google 부분을 수정하세요)
+    window.location.href = "http://localhost:8080/oauth2/authorization/google";
   }
 
   return (
