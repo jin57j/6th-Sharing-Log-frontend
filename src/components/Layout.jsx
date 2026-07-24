@@ -15,7 +15,7 @@ function Layout() {
       <Sidebar />
 
       {/* 메인 영역 */}
-      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-20 lg:pb-0">
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-20 pt-16 lg:pb-0 lg:pt-0">
         <Outlet />
       </main>
 

@@ -1,125 +1,188 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { NavLink } from "react-router";
 import {
-  HiMenu,
-  HiX,
-  HiHome,
-  HiRefresh,
-  HiClipboardList,
-  HiCalendar,
-  HiBell,
-  HiCog,
-  HiDocumentText,
-  HiCheckCircle,
-  HiInformationCircle,
-} from "react-icons/hi";
+  BellRing,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  Home,
+  LogOut,
+  Menu,
+  Megaphone,
+  RotateCcw,
+  Settings,
+  UserRound,
+  X,
+} from "lucide-react";
+import Logo from "./Logo";
 
-function Sidebar() {
-  const [isOpen, setIsOpen] = useState(true);
+const primaryMenuItems = [
+  { to: "/home", label: "홈", icon: Home },
+  { to: "/rotation", label: "로테이션", icon: RotateCcw },
+  { to: "/task", label: "업무 · 일정", icon: ClipboardList },
+  { to: "/reservation", label: "공간 예약", icon: CalendarDays },
+];
 
+const secondaryMenuItems = [
+  { to: "/notice", label: "공지", icon: Megaphone },
+  { to: "/notification", label: "알림", icon: BellRing, badge: 0 },
+  { to: "/completed-tasks", label: "완료 업무", icon: CheckCircle2 },
+  { to: "/settings", label: "설정 · 규칙", icon: Settings },
+  { to: "/account", label: "계정", icon: UserRound },
+];
+
+// 사용자 프로필 아이콘
+function UserAvatar() {
   return (
-    <nav
-      className={`${isOpen ? "w-64" : "w-20"} transition-all duration-300 h-screen bg-gray-50 border-r border-gray-200 p-5 flex flex-col justify-between`}
+    <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E63946] text-xs font-bold text-white">
+      김
+    </span>
+  );
+}
+
+// 사이드바의 개별 메뉴 버튼 1개를 그리는 컴포넌트
+function SidebarMenuItem({ to, label, icon: Icon, badge, primary = false, onNavigate }) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onNavigate}
+      className={({ isActive }) => {
+        const baseStyle = "flex w-full items-center gap-3 rounded-xl text-sm transition-colors";
+        const typeStyle = primary ? "px-3 py-3 font-bold" : "px-3 py-2.5 font-semibold";
+        const activeStyle = isActive
+          ? primary
+            ? "bg-[#E63946] text-white shadow-sm"
+            : "bg-[#FFB703]/25 text-[#1A1428]"
+          : "text-[#8B8575] hover:bg-[#EFEBE2] hover:text-[#1A1428]";
+
+        return `${baseStyle} ${typeStyle} ${activeStyle}`;
+      }}
     >
-      <div>
-        {/* 헤더 및 토글 버튼 */}
-        <div className="flex items-center justify-between mb-10">
-          {isOpen && <h3 className="font-bold text-xl">Sharing Log</h3>}
+      <Icon size={primary ? 18 : 17} aria-hidden="true" />
+      <span>{label}</span>
+      {badge > 0 && (
+        <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-[#E63946] px-1 text-[10px] text-white">
+          {badge}
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
+// 상단 헤더 바(모바일에서만 보임)
+function MobileHeader({ onOpenMenu }) {
+  return (
+    <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-[#1A1428]/10 bg-white px-5 lg:hidden">
+      <button
+        type="button"
+        onClick={onOpenMenu}
+        aria-label="메뉴 열기"
+        className="rounded-lg p-1.5 text-[#1A1428] transition-colors hover:bg-[#EFEBE2]"
+      >
+        <Menu size={20} aria-hidden="true" />
+      </button>
+
+      <Logo />
+
+      <NavLink
+        to="/notice"
+        aria-label="공지 보기"
+        className="rounded-lg p-1.5 text-[#1A1428] transition-colors hover:bg-[#EFEBE2]"
+      >
+        <FileText size={20} aria-hidden="true" />
+      </NavLink>
+    </header>
+  );
+}
+
+// 사이드바의 메뉴판 전체를 배치하는 컴포넌트
+function SidebarPanel({ mobile = false, onClose }) {
+  return (
+    <aside
+      className={`${
+        mobile ? "relative z-10 flex h-full w-[286px]" : "hidden h-full w-[258px] shrink-0 lg:flex"
+      } flex-col border-r border-[#1A1428]/10 bg-white p-4`}
+    >
+      <div className="flex items-center justify-between px-2 py-2">
+        <Logo />
+        {mobile && (
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2 rounded-lg hover:bg-gray-200"
+            type="button"
+            onClick={onClose}
+            aria-label="메뉴 닫기"
+            className="rounded-lg p-1.5 text-[#1A1428] transition-colors hover:bg-[#EFEBE2]"
           >
-            {isOpen ? <HiX size={20} /> : <HiMenu size={20} />}
+            <X size={18} aria-hidden="true" />
           </button>
-        </div>
-
-        {/* 메뉴 리스트 */}
-        <ul className="space-y-4">
-          <MenuLink to="/home" icon={<HiHome />} label="홈" isOpen={isOpen} />
-          <MenuLink
-            to="/rotation"
-            icon={<HiRefresh />}
-            label="로테이션"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/task"
-            icon={<HiClipboardList />}
-            label="업무"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/reservation"
-            icon={<HiCalendar />}
-            label="예약"
-            isOpen={isOpen}
-          />
-
-          {isOpen && (
-            <div className="mt-8 mb-2 text-xs text-gray-400 font-semibold uppercase">
-              더보기
-            </div>
-          )}
-
-          <MenuLink
-            to="/notice"
-            icon={<HiInformationCircle />}
-            label="공지"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/notification"
-            icon={<HiBell />}
-            label="알림"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/completed-tasks"
-            icon={<HiCheckCircle />}
-            label="완료 업무"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/settings"
-            icon={<HiCog />}
-            label="설정"
-            isOpen={isOpen}
-          />
-          <MenuLink
-            to="/rules"
-            icon={<HiDocumentText />}
-            label="규칙"
-            isOpen={isOpen}
-          />
-        </ul>
-      </div>
-
-      {/* 사용자 정보 */}
-      <div className={`mt-auto pt-5 border-t ${!isOpen && "text-center"}`}>
-        <p className={`text-sm ${!isOpen ? "hidden" : "block"}`}>
-          김지수 (강남 쉐어하우스)
-        </p>
-        {!isOpen && (
-          <div className="w-8 h-8 bg-blue-500 rounded-full mx-auto" />
         )}
       </div>
-    </nav>
+
+      <div className="mt-7 space-y-1">
+        {primaryMenuItems.map((item) => (
+          <SidebarMenuItem
+            key={item.to}
+            {...item}
+            primary
+            onNavigate={mobile ? onClose : undefined}
+          />
+        ))}
+      </div>
+
+      <div className="mt-7 border-t border-[#1A1428]/10 pt-5">
+        <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8B8575]">
+          더보기
+        </p>
+        <div className="space-y-1">
+          {secondaryMenuItems.map((item) => (
+            <SidebarMenuItem
+              key={item.to}
+              {...item}
+              onNavigate={mobile ? onClose : undefined}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-auto border-t border-[#1A1428]/10 pt-4">
+        <div className="flex items-center gap-3 px-2">
+          <UserAvatar />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold text-[#1A1428]">김지수</p>
+            <p className="truncate text-xs text-[#8B8575]">강남 쉐어하우스</p>
+          </div>
+          <button
+            type="button"
+            aria-label="로그아웃"
+            className="rounded-lg p-1.5 text-[#8B8575] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1428]"
+          >
+            <LogOut size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+    </aside>
   );
 }
 
-// 메뉴 링크를 재사용 가능한 컴포넌트로 분리
-function MenuLink({ to, icon, label, isOpen }) {
+export default function Sidebar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <li>
-      <Link
-        to={to}
-        className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-200 transition-colors"
-      >
-        <span className="text-xl">{icon}</span>
-        {isOpen && <span>{label}</span>}
-      </Link>
-    </li>
+    <>
+      <SidebarPanel />
+      <MobileHeader onOpenMenu={() => setIsMobileMenuOpen(true)} />
+
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="메뉴 닫기"
+            className="absolute inset-0 bg-[#1A1428]/25"
+          />
+          <SidebarPanel mobile onClose={() => setIsMobileMenuOpen(false)} />
+        </div>
+      )}
+    </>
   );
 }
-
-export default Sidebar;
