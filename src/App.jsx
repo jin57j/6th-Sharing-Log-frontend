@@ -7,7 +7,7 @@ import InviteHousePage from "./pages/house/InviteHousePage";
 import JoinHousePage from "./pages/house/JoinHousePage";
 // 로그인 및 하우스 생성, 출입
 
-import Layout from "./components/Layout";
+import Layout from "./components/layout/Layout";
 import Home from "./pages/dashboard/Home";
 import Rotation from "./pages/dashboard/Rotation";
 import Task from "./pages/dashboard/Task";

@@ -1,36 +1,8 @@
 import { useState } from "react";
 import { NavLink } from "react-router";
-import {
-  BellRing,
-  CalendarDays,
-  CheckCircle2,
-  ClipboardList,
-  FileText,
-  Home,
-  LogOut,
-  Menu,
-  Megaphone,
-  RotateCcw,
-  Settings,
-  UserRound,
-  X,
-} from "lucide-react";
-import Logo from "./Logo";
-
-const primaryMenuItems = [
-  { to: "/home", label: "홈", icon: Home },
-  { to: "/rotation", label: "로테이션", icon: RotateCcw },
-  { to: "/task", label: "업무 · 일정", icon: ClipboardList },
-  { to: "/reservation", label: "공간 예약", icon: CalendarDays },
-];
-
-const secondaryMenuItems = [
-  { to: "/notice", label: "공지", icon: Megaphone },
-  { to: "/notification", label: "알림", icon: BellRing, badge: 0 },
-  { to: "/completed-tasks", label: "완료 업무", icon: CheckCircle2 },
-  { to: "/settings", label: "설정 · 규칙", icon: Settings },
-  { to: "/account", label: "계정", icon: UserRound },
-];
+import { FileText, LogOut, Menu, X } from "lucide-react";
+import { PRIMARY_MENU_ITEMS, SECONDARY_MENU_ITEMS } from "../../constants/menu";
+import Logo from "../common/Logo";
 
 // 사용자 프로필 아이콘
 function UserAvatar() {
@@ -119,7 +91,7 @@ function SidebarPanel({ mobile = false, onClose }) {
       </div>
 
       <div className="mt-7 space-y-1">
-        {primaryMenuItems.map((item) => (
+        {PRIMARY_MENU_ITEMS.map((item) => (
           <SidebarMenuItem
             key={item.to}
             {...item}
@@ -134,7 +106,7 @@ function SidebarPanel({ mobile = false, onClose }) {
           더보기
         </p>
         <div className="space-y-1">
-          {secondaryMenuItems.map((item) => (
+          {SECONDARY_MENU_ITEMS.map((item) => (
             <SidebarMenuItem
               key={item.to}
               {...item}
