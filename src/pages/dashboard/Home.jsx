@@ -1,8 +1,8 @@
 import { mockMyTasks, mockNotices } from "../../mocks/homeData";
 
 // 두가지는 컴포넌트로 분리해둠
-import TaskCard from "../../components/TaskCard";
-import NoticeItem from "../../components/NoticeItem";
+import TaskCard from "../../components/common/TaskCard";
+import NoticeItem from "../../components/common/NoticeItem";
 
 function Home() {
     const userName = "지수";
