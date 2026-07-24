@@ -1,19 +1,26 @@
+/*
+ [전체 메인 레이아웃 컴포넌트]
+ - 모바일/데스크톱 화면에 맞춰 사이드바와 하단 네비게이션 바를 고정시킴.
+ */
+
 import { Outlet } from "react-router";
+
 import Sidebar from "./Sidebar";
-import Footer from "./Footer";
+import BottomNavigationBar from "./BottomNavigationBar";
+
 function Layout() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* 상단/사이드바 영역 */}
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
-          <Outlet />
-        </main>
-      </div>
+    <div className="flex h-dvh w-full overflow-hidden bg-[#F8F4EE]">
+      {/* 사이드바 */}
+      <Sidebar />
 
-      {/* 하단바 영역*/}
-      <Footer />
+      {/* 메인 영역 */}
+      <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <Outlet />
+      </main>
+
+      {/* 하단 네비게이션 바 (모바일용) */}
+      <BottomNavigationBar />
     </div>
   );
 }
