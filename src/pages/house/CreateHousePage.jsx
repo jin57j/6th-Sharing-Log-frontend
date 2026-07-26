@@ -3,8 +3,6 @@ import { useNavigate } from "react-router";
 
 import OnboardingShell from "../../components/OnboardingShell";
 
-const backendUrl = import.meta.env.VITE_API_BASE_URL;
-
 function CreateHousePage() {
   const navigate = useNavigate();
 
@@ -14,7 +12,7 @@ function CreateHousePage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const csrf = await fetch(`${backendUrl}/api/auth/csrf`, {
+    const csrf = await fetch(`/api/auth/csrf`, {
       credentials: "include",
     }).then((response) => response.json());
 
@@ -23,7 +21,7 @@ function CreateHousePage() {
       [csrf.headerName]: csrf.token,
     };
 
-    const group = await fetch(`${backendUrl}/api/groups`, {
+    const group = await fetch(`/api/groups`, {
       method: "POST",
       credentials: "include",
       headers,
@@ -35,16 +33,13 @@ function CreateHousePage() {
       return response.json();
     });
 
-    const invitation = await fetch(
-      `${backendUrl}/api/groups/${group.groupId}/invitations`,
-      {
+    const invitation = await fetch(`/api/groups/${group.groupId}/invitations`, {
       method: "POST",
       credentials: "include",
       headers: {
         [csrf.headerName]: csrf.token,
       },
-      },
-    ).then(async (response) => {
+    }).then(async (response) => {
       if (!response.ok) throw new Error("초대 링크 생성에 실패했습니다.");
       return response.json();
     });
