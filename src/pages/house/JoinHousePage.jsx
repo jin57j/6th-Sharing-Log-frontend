@@ -3,8 +3,6 @@ import { useNavigate } from "react-router";
 
 import OnboardingShell from "../../components/OnboardingShell";
 
-const backendUrl = import.meta.env.VITE_API_BASE_URL;
-
 function JoinHousePage() {
   const navigate = useNavigate();
 
@@ -20,7 +18,7 @@ function JoinHousePage() {
   }
 
   async function getCsrfToken() {
-    const response = await fetch(`${backendUrl}/api/auth/csrf`, {
+    const response = await fetch(`/api/auth/csrf`, {
       credentials: "include",
       headers: {
         Accept: "application/json",
@@ -71,7 +69,7 @@ function JoinHousePage() {
       const csrf = await getCsrfToken();
 
       const response = await fetch(
-        `${backendUrl}/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
+        `/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
         {
           method: "POST",
           credentials: "include",
