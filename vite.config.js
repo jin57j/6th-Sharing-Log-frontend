@@ -7,19 +7,19 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://Sharinglog-env.eba-mitpdzez.ap-northeast-2.elasticbeanstalk.com",
         changeOrigin: true,
       },
       "/oauth2": {
-        target: "http://localhost:8080",
+        target: "http://Sharinglog-env.eba-mitpdzez.ap-northeast-2.elasticbeanstalk.com",
         changeOrigin: true,
       },
       "/login": {
-        target: "http://localhost:8080",
+        target: "http://Sharinglog-env.eba-mitpdzez.ap-northeast-2.elasticbeanstalk.com",
         changeOrigin: true,
       },
       "/invite": {
-        target: "http://localhost:8080",
+        target: "http://Sharinglog-env.eba-mitpdzez.ap-northeast-2.elasticbeanstalk.com",
         changeOrigin: true,
       },
     },

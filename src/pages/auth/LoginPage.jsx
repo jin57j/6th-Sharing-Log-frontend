@@ -14,7 +14,7 @@ function LoginPage() {
 
     // 2. 백엔드의 구글 로그인 엔드포인트로 이동합니다.
     // (백엔드 개발자와 논의한 경로가 다를 경우 /api/auth/google 부분을 수정하세요)
-    window.location.href = "http://localhost:8080/oauth2/authorization/google";
+    window.location.href = `${backendUrl}/oauth2/authorization/google`;
   }
 
   return (
