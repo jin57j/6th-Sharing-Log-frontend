@@ -68,6 +68,7 @@ function JoinHousePage() {
       setIsJoining(true);
 
       const csrf = await getCsrfToken();
+      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(
         `/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
@@ -76,6 +77,7 @@ function JoinHousePage() {
           credentials: "include", // 세션 쿠키 전송
           headers: {
             Accept: "application/json",
+            Authorization: `Bearer ${token}`,
             [csrf.headerName]: csrf.token,
           },
         },
