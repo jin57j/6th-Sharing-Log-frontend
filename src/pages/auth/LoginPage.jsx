@@ -40,7 +40,7 @@ function LoginPage() {
             </span>
 
             <span className="font-display text-2xl font-black tracking-[-0.02em]">
-              Sharing Log
+              같이살기
             </span>
           </div>
 
