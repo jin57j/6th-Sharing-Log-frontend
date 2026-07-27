@@ -12,18 +12,13 @@ function CreateHousePage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    const token = localStorage.getItem("accessToken");
-
+    // 토큰 삭제, 세션 쿠키 전송을 위해 credentials: "include" 유지
     const csrf = await fetch(`/api/auth/csrf`, {
       credentials: "include",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).then((response) => response.json());
 
     const headers = {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
       [csrf.headerName]: csrf.token,
     };
 
@@ -43,7 +38,6 @@ function CreateHousePage() {
       method: "POST",
       credentials: "include",
       headers: {
-        Authorization: `Bearer ${token}`,
         [csrf.headerName]: csrf.token,
       },
     }).then(async (response) => {

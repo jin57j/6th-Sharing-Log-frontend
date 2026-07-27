@@ -18,14 +18,11 @@ function JoinHousePage() {
   }
 
   async function getCsrfToken() {
-    // 로컬 스토리지에 저장된 토큰 꺼내기
-    const token = localStorage.getItem("accessToken");
-
+    // 토큰 삭제, 세션 쿠키 전송을 위해 credentials: "include" 유지
     const response = await fetch(`/api/auth/csrf`, {
       credentials: "include",
       headers: {
         Accept: "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -71,16 +68,14 @@ function JoinHousePage() {
       setIsJoining(true);
 
       const csrf = await getCsrfToken();
-      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(
         `/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
         {
           method: "POST",
-          credentials: "include",
+          credentials: "include", // 세션 쿠키 전송
           headers: {
             Accept: "application/json",
-            Authorization: `Bearer ${token}`,
             [csrf.headerName]: csrf.token,
           },
         },
