@@ -12,12 +12,18 @@ function CreateHousePage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    const token = localStorage.getItem("accessToken");
+
     const csrf = await fetch(`/api/auth/csrf`, {
       credentials: "include",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }).then((response) => response.json());
 
     const headers = {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
       [csrf.headerName]: csrf.token,
     };
 
@@ -37,6 +43,7 @@ function CreateHousePage() {
       method: "POST",
       credentials: "include",
       headers: {
+        Authorization: `Bearer ${token}`,
         [csrf.headerName]: csrf.token,
       },
     }).then(async (response) => {
