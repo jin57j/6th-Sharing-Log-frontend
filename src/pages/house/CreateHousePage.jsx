@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import { getCsrfToken } from "../../api/authApi";
+import { createGroup } from "../../api/groupApi";
+import { createInvitation } from "../../api/invitationApi";
 import OnboardingShell from "../../components/OnboardingShell";
 
 function CreateHousePage() {
@@ -12,42 +15,27 @@ function CreateHousePage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 토큰 삭제, 세션 쿠키 전송을 위해 credentials: "include" 유지
-    const csrf = await fetch(`/api/auth/csrf`, {
-      credentials: "include",
-      
-    }).then((response) => response.json());
+    // 기존 코드와 동일하게 localStorage에서 로그인 토큰을 가져옵니다.
+    const token = localStorage.getItem("accessToken");
 
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      [csrf.headerName]: csrf.token,
-    };
+    // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
+    const csrf = await getCsrfToken();
 
-    const group = await fetch(`/api/groups`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-      body: JSON.stringify({
-        name: houseName.trim(),
-      }),
-    }).then(async (response) => {
-      if (!response.ok) throw new Error("하우스 생성에 실패했습니다.");
-      return response.json();
+    // 2. 사용자가 입력한 이름으로 하우스를 생성합니다.
+    const group = await createGroup({
+      name: houseName.trim(),
+      token,
+      csrf,
     });
 
-    const invitation = await fetch(`/api/groups/${group.groupId}/invitations`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        [csrf.headerName]: csrf.token,
-      },
-    }).then(async (response) => {
-      if (!response.ok) throw new Error("초대 링크 생성에 실패했습니다.");
-      return response.json();
+    // 3. 생성된 하우스의 초대 코드를 발급합니다.
+    const invitation = await createInvitation({
+      groupId: group.groupId,
+      token,
+      csrf,
     });
 
+    // 4. 초대 코드 화면으로 이동합니다.
     navigate("/invite-house", {
       state: {
         houseName: group.name,
@@ -109,7 +97,9 @@ function CreateHousePage() {
               className="mb-2 block text-sm font-bold"
             >
               주소{" "}
-              <span className="text-xs font-normal text-[#8B8575]">(선택)</span>
+              <span className="text-xs font-normal text-[#8B8575]">
+                (선택)
+              </span>
             </label>
 
             <input
