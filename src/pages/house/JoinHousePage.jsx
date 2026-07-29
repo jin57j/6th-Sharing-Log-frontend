@@ -39,17 +39,13 @@ function JoinHousePage() {
       // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
       const csrf = await getCsrfToken();
 
-      // 2. 기존 코드와 동일하게 로그인 토큰을 가져옵니다.
-      const token = localStorage.getItem("accessToken");
-
-      // 3. 입력한 초대 코드로 하우스 참가를 요청합니다.
+      // 2. 초대 코드로 하우스 참가를 요청합니다.
       const joinedGroup = await acceptInvitation({
         code: cleanCode,
-        token,
         csrf,
       });
 
-      // 4. 참가한 하우스의 홈 화면으로 이동합니다.
+      // 3. 참가한 하우스의 홈 화면으로 이동합니다.
       navigate("/home", {
         replace: true,
         state: {

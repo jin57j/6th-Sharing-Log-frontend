@@ -15,23 +15,18 @@ function CreateHousePage() {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 기존 코드와 동일하게 localStorage에서 로그인 토큰을 가져옵니다.
-    const token = localStorage.getItem("accessToken");
-
     // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
     const csrf = await getCsrfToken();
 
     // 2. 사용자가 입력한 이름으로 하우스를 생성합니다.
     const group = await createGroup({
       name: houseName.trim(),
-      token,
       csrf,
     });
 
     // 3. 생성된 하우스의 초대 코드를 발급합니다.
     const invitation = await createInvitation({
       groupId: group.groupId,
-      token,
       csrf,
     });
 

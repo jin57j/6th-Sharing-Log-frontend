@@ -1,13 +1,18 @@
 // 새로운 하우스를 생성하는 함수
-export async function createGroup({ name, token, csrf }) {
+export async function createGroup({ name, csrf }) {
   const response = await fetch("/api/groups", {
     method: "POST",
+
+    // 브라우저가 로그인 세션 쿠키를 백엔드로 보내도록 설정
     credentials: "include",
+
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+
+      // Spring Security의 CSRF 검사를 통과하기 위한 헤더
       [csrf.headerName]: csrf.token,
     },
+
     body: JSON.stringify({
       name,
     }),
