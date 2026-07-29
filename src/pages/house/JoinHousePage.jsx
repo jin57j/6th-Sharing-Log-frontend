@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 
+import { getCsrfToken } from "../../api/authApi";
+import { acceptInvitation } from "../../api/invitationApi";
 import OnboardingShell from "../../components/OnboardingShell";
 
 function JoinHousePage() {
@@ -17,43 +19,10 @@ function JoinHousePage() {
     setErrorMessage("");
   }
 
-  async function getCsrfToken() {
-    // 토큰 삭제, 세션 쿠키 전송을 위해 credentials: "include" 유지
-    const response = await fetch(`/api/auth/csrf`, {
-      credentials: "include",
-      headers: {
-        Accept: "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error("보안 토큰을 가져오지 못했습니다.");
-    }
-
-    return response.json();
-  }
-
-  async function getErrorMessage(response) {
-    const contentType = response.headers.get("content-type") ?? "";
-
-    if (contentType.includes("application/json")) {
-      const body = await response.json();
-      return (
-        body.detail ??
-        body.message ??
-        body.error ??
-        "하우스 참가에 실패했습니다."
-      );
-    }
-
-    return response.status === 401 || response.redirected
-      ? "로그인 후 다시 시도해 주세요."
-      : "초대코드를 확인하거나 관리자에게 새 코드를 요청해 주세요.";
-  }
-
   async function handleSubmit(event) {
     event.preventDefault();
 
+    // 초대 코드가 영문, 숫자, -, _로 구성된 22자리인지 검사합니다.
     const isValidCode = /^[A-Za-z0-9_-]{22}$/.test(cleanCode);
 
     if (!isValidCode) {
@@ -67,28 +36,16 @@ function JoinHousePage() {
       setErrorMessage("");
       setIsJoining(true);
 
+      // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
       const csrf = await getCsrfToken();
-      const token = localStorage.getItem("accessToken");
 
-      const response = await fetch(
-        `/api/invitations/${encodeURIComponent(cleanCode)}/accept`,
-        {
-          method: "POST",
-          credentials: "include", // 세션 쿠키 전송
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-            [csrf.headerName]: csrf.token,
-          },
-        },
-      );
+      // 2. 초대 코드로 하우스 참가를 요청합니다.
+      const joinedGroup = await acceptInvitation({
+        code: cleanCode,
+        csrf,
+      });
 
-      if (!response.ok) {
-        throw new Error(await getErrorMessage(response));
-      }
-
-      const joinedGroup = await response.json();
-
+      // 3. 참가한 하우스의 홈 화면으로 이동합니다.
       navigate("/home", {
         replace: true,
         state: {
@@ -99,7 +56,9 @@ function JoinHousePage() {
       });
     } catch (error) {
       setErrorMessage(
-        error instanceof Error ? error.message : "하우스 참가에 실패했습니다.",
+        error instanceof Error
+          ? error.message
+          : "하우스 참가에 실패했습니다.",
       );
     } finally {
       setIsJoining(false);
@@ -137,7 +96,9 @@ function JoinHousePage() {
 
             <span
               className={`text-[11px] font-bold ${
-                cleanCode.length === 22 ? "text-[#06D6A0]" : "text-[#8B8575]"
+                cleanCode.length === 22
+                  ? "text-[#06D6A0]"
+                  : "text-[#8B8575]"
               }`}
             >
               {cleanCode.length}/22
