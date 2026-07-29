@@ -1,10 +1,9 @@
-import useReservation from "../../hooks/useReservation";
 import ReservationForm from "../../components/reservation/ReservationForm";
 import ReservationList from "../../components/reservation/ReservationList";
 import SpaceForm from "../../components/reservation/SpaceForm";
+import useReservation from "../../hooks/useReservation";
 
 function Reservation() {
-  // 로직과 상태를 커스텀 훅으로 들고옴
   const {
     today,
     spaces,
@@ -20,39 +19,57 @@ function Reservation() {
     handleCancel,
   } = useReservation();
 
+  const selectedSpace = spaces.find(
+    (space) =>
+      String(space.spaceId) === String(selectedSpaceId),
+  );
+
   return (
-    <main>
-      <header>
-        <h1>공간 예약</h1>
-        <p>공용 공간의 사용 시간을 예약할 수 있습니다.</p>
-      </header>
+    <main className="min-h-full text-[#1A1428]">
+      <div className="mx-auto max-w-4xl p-5 pb-8 sm:p-8">
+        <header>
+          <p className="text-sm text-[#8B8575]">
+            우리 집 공용공간을 겹치지 않게
+          </p>
 
-      <hr />
+          <h1 className="mt-1 font-display text-[30px] font-black tracking-[-0.03em]">
+            공간 예약
+          </h1>
+        </header>
 
-      <SpaceForm onAddSpace={handleAddSpace} />
+        <div className="mt-7 space-y-6">
+          <ReservationForm
+            spaces={spaces}
+            selectedSpaceId={selectedSpaceId}
+            setSelectedSpaceId={setSelectedSpaceId}
+            today={today}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            onSubmit={handleReservation}
+          />
 
-      <hr />
+          <SpaceForm onAddSpace={handleAddSpace} />
 
-      <ReservationForm
-        spaces={spaces}
-        selectedSpaceId={selectedSpaceId}
-        setSelectedSpaceId={setSelectedSpaceId}
-        today={today}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        onSubmit={handleReservation}
-      />
+          {message && (
+            <p
+              role="status"
+              className="rounded-xl border border-[#E63946]/15 bg-[#E63946]/5 px-4 py-3 text-sm font-semibold text-[#1A1428]"
+            >
+              {message}
+            </p>
+          )}
 
-      {message && <p role="status">{message}</p>}
-
-      <hr />
-
-      <ReservationList
-        selectedDate={selectedDate}
-        loading={loading}
-        reservations={reservations}
-        onCancel={handleCancel}
-      />
+          <ReservationList
+            selectedDate={selectedDate}
+            selectedSpaceName={
+              selectedSpace?.name ?? "공간을 선택해 주세요"
+            }
+            loading={loading}
+            reservations={reservations}
+            onCancel={handleCancel}
+          />
+        </div>
+      </div>
     </main>
   );
 }
