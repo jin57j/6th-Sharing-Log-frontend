@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 import { FileText, LogOut, Menu, X } from "lucide-react";
 import { PRIMARY_MENU_ITEMS, SECONDARY_MENU_ITEMS } from "../../constants/menu";
+import { useLogout } from "../../hooks/useLogout";
 import Logo from "../common/Logo";
 
 // 사용자 프로필 아이콘
@@ -69,7 +70,12 @@ function MobileHeader({ onOpenMenu }) {
 }
 
 // 사이드바의 메뉴판 전체를 배치하는 컴포넌트
-function SidebarPanel({ mobile = false, onClose }) {
+function SidebarPanel({
+  mobile = false,
+  onClose,
+  onLogout,
+  isLoggingOut,
+}) {
   return (
     <aside
       className={`${
@@ -125,8 +131,10 @@ function SidebarPanel({ mobile = false, onClose }) {
           </div>
           <button
             type="button"
-            aria-label="로그아웃"
-            className="rounded-lg p-1.5 text-[#8B8575] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1428]"
+            onClick={onLogout}
+            disabled={isLoggingOut}
+            aria-label={isLoggingOut ? "로그아웃 처리 중" : "로그아웃"}
+            className="rounded-lg p-1.5 text-[#8B8575] transition-colors hover:bg-[#EFEBE2] hover:text-[#1A1428] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <LogOut size={16} aria-hidden="true" />
           </button>
@@ -138,12 +146,24 @@ function SidebarPanel({ mobile = false, onClose }) {
 
 export default function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { handleLogout, isLoggingOut } = useLogout();
+
+  // 로그아웃 실행 후 모바일 메뉴까지 함께 닫아주는 핸들러
+  const onLogout = () => {
+    handleLogout(() => setIsMobileMenuOpen(false));
+  };
 
   return (
     <>
-      <SidebarPanel />
+      {/* PC 사이드바 */}
+      <SidebarPanel
+        onLogout={onLogout}
+        isLoggingOut={isLoggingOut}
+      />
+
       <MobileHeader onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
+      {/* 모바일 사이드바 */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
@@ -152,7 +172,13 @@ export default function Sidebar() {
             aria-label="메뉴 닫기"
             className="absolute inset-0 bg-[#1A1428]/25"
           />
-          <SidebarPanel mobile onClose={() => setIsMobileMenuOpen(false)} />
+
+          <SidebarPanel
+            mobile
+            onClose={() => setIsMobileMenuOpen(false)}
+            onLogout={onLogout}
+            isLoggingOut={isLoggingOut}
+          />
         </div>
       )}
     </>
