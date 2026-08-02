@@ -1,7 +1,7 @@
 import { BellRing, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router";
 
-import useNotifications from "../../hooks/useNotifications";
+import useNotificationContext from "../../hooks/useNotificationContext";
 import DeadlineCard from "../../components/notification/DeadlineCard";
 import SubstituteRequestCard from "../../components/notification/SubstituteRequestCard";
 
@@ -24,7 +24,7 @@ export default function Notification() {
     errorMessage,
     reload,
     handleSubstituteResponse,
-  } = useNotifications();
+  } = useNotificationContext();
 
   if (loading) {
     return (

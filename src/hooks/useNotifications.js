@@ -111,9 +111,16 @@ export default function useNotifications() {
     }
   }
 
+  const notificationCount =
+    deadlineItems.length +
+    substituteRequests.filter(
+      (request) => !request.myResponse,
+    ).length;
+
   return {
     deadlineItems,
     substituteRequests,
+    notificationCount,
     loading,
     respondingRequestId,
     errorMessage,

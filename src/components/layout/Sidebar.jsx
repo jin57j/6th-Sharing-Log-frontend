@@ -4,6 +4,7 @@ import { FileText, LogOut, Menu, X } from "lucide-react";
 import { PRIMARY_MENU_ITEMS, SECONDARY_MENU_ITEMS } from "../../constants/menu";
 import { useLogout } from "../../hooks/useLogout";
 import Logo from "../common/Logo";
+import useNotificationContext from "../../hooks/useNotificationContext";
 
 // 사용자 프로필 아이콘
 function UserAvatar() {
@@ -75,6 +76,7 @@ function SidebarPanel({
   onClose,
   onLogout,
   isLoggingOut,
+  notificationCount,
 }) {
   return (
     <aside
@@ -116,9 +118,14 @@ function SidebarPanel({
             <SidebarMenuItem
               key={item.to}
               {...item}
+              badge={
+                item.to === "/notification"
+                  ? notificationCount
+                  : item.badge
+              }
               onNavigate={mobile ? onClose : undefined}
             />
-          ))}
+))}
         </div>
       </div>
 
@@ -147,6 +154,7 @@ function SidebarPanel({
 export default function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { handleLogout, isLoggingOut } = useLogout();
+  const { notificationCount } = useNotificationContext();
 
   // 로그아웃 실행 후 모바일 메뉴까지 함께 닫아주는 핸들러
   const onLogout = () => {
@@ -159,6 +167,7 @@ export default function Sidebar() {
       <SidebarPanel
         onLogout={onLogout}
         isLoggingOut={isLoggingOut}
+        notificationCount={notificationCount}
       />
 
       <MobileHeader onOpenMenu={() => setIsMobileMenuOpen(true)} />
@@ -178,6 +187,7 @@ export default function Sidebar() {
             onClose={() => setIsMobileMenuOpen(false)}
             onLogout={onLogout}
             isLoggingOut={isLoggingOut}
+            notificationCount={notificationCount}
           />
         </div>
       )}
