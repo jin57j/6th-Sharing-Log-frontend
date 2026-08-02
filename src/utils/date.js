@@ -32,3 +32,15 @@ export function formatDate(dateValue) {
     minute: "2-digit",
   }).format(new Date(dateValue));
 }
+
+// 오늘 날짜를 'YYYY년 M월 D일 · O요일' 형태의 한글 포맷 문자열로 반환
+export const getFormattedToday = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+  const days = ["일", "월", "화", "수", "목", "금", "토"];
+  const dayName = days[now.getDay()];
+
+  return `${year}년 ${month}월 ${date}일 · ${dayName}요일`;
+};

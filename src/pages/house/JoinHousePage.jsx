@@ -1,69 +1,17 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-
-import { getCsrfToken } from "../../api/authApi";
-import { acceptInvitation } from "../../api/invitationApi";
 import OnboardingShell from "../../components/OnboardingShell";
+import { INVITE_CODE_LENGTH } from "../../constants/invitation";
+import useJoinHouse from "../../hooks/useJoinHouse";
 
 function JoinHousePage() {
-  const navigate = useNavigate();
-
-  const [typedCode, setTypedCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
-
-  const cleanCode = typedCode.trim();
-
-  function handleInputChange(event) {
-    setTypedCode(event.target.value);
-    setErrorMessage("");
-  }
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    // 초대 코드가 영문, 숫자, -, _로 구성된 22자리인지 검사합니다.
-    const isValidCode = /^[A-Za-z0-9_-]{22}$/.test(cleanCode);
-
-    if (!isValidCode) {
-      setErrorMessage(
-        "영문, 숫자, -, _로 이루어진 22자리 코드를 입력해 주세요.",
-      );
-      return;
-    }
-
-    try {
-      setErrorMessage("");
-      setIsJoining(true);
-
-      // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
-      const csrf = await getCsrfToken();
-
-      // 2. 초대 코드로 하우스 참가를 요청합니다.
-      const joinedGroup = await acceptInvitation({
-        code: cleanCode,
-        csrf,
-      });
-
-      // 3. 참가한 하우스의 홈 화면으로 이동합니다.
-      navigate("/home", {
-        replace: true,
-        state: {
-          groupId: joinedGroup.groupId,
-          houseName: joinedGroup.groupName,
-          role: joinedGroup.role,
-        },
-      });
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : "하우스 참가에 실패했습니다.",
-      );
-    } finally {
-      setIsJoining(false);
-    }
-  }
+  const {
+    typedCode,
+    cleanCode,
+    errorMessage,
+    isJoining,
+    handleInputChange,
+    handleSubmit,
+    navigate,
+  } = useJoinHouse();
 
   return (
     <OnboardingShell>
@@ -96,12 +44,12 @@ function JoinHousePage() {
 
             <span
               className={`text-[11px] font-bold ${
-                cleanCode.length === 22
+                cleanCode.length === INVITE_CODE_LENGTH
                   ? "text-[#06D6A0]"
                   : "text-[#8B8575]"
               }`}
             >
-              {cleanCode.length}/22
+              {cleanCode.length}/{INVITE_CODE_LENGTH}
             </span>
           </div>
 
@@ -110,8 +58,8 @@ function JoinHousePage() {
             type="text"
             value={typedCode}
             onChange={handleInputChange}
-            placeholder="22자리 초대코드"
-            maxLength={22}
+            placeholder={`${INVITE_CODE_LENGTH}자리 초대코드`}
+            maxLength={INVITE_CODE_LENGTH}
             autoComplete="off"
             spellCheck={false}
             disabled={isJoining}
