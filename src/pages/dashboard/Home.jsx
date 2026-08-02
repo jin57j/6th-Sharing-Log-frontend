@@ -60,8 +60,13 @@ function Home() {
             안녕하세요, {userName}님 👋
           </h1>
         </div>
-        <button className="flex items-center justify-center w-12 h-12 text-xl bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.05)] cursor-pointer">
-          <LuBell className="w-[18px] h-[18px]" />
+        <button
+            type="button"
+            onClick={() => navigate("/notification")}
+            aria-label="알림 보기"
+            className="flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-white text-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)]"
+        >
+        <LuBell className="h-[18px] w-[18px]" />
         </button>
       </header>
 

@@ -14,6 +14,7 @@ import Task from "./pages/dashboard/Task";
 import Reservation from "./pages/dashboard/Reservation";
 import CompletedTasks from "./pages/dashboard/CompletedTasks";
 import Notice from "./pages/dashboard/Notice";
+import Notification from "./pages/dashboard/Notification";
 // 메인 대시보드
 
 function App() {
@@ -39,6 +40,8 @@ function App() {
         <Route path="/reservation" element={<Reservation />} />
         <Route path="/completed-tasks" element={<CompletedTasks />} />
         <Route path="/notice" element={<Notice />} />
+
+        <Route path="/notification" element={<Notification />} />
       </Route>
     </Routes>
   );
