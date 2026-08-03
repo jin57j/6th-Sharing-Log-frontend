@@ -1,71 +1,20 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router";
-
 import OnboardingShell from "../../components/OnboardingShell";
-
-//22자리 초대코드를 보기 편하게 4자리씩 띄어쓰기해주는 함수
-function makeReadableCode(code) {
-  return code.match(/.{1,4}/g)?.join(" ") ?? code;
-}
-
-function formatExpiry(value) {
-  const date = new Date(value);
-
-  // 날짜값이 이상하면 "24시간 후"라는 안전장치 문구를 보여줌
-  if (Number.isNaN(date.getTime())) {
-    return "24시간 후";
-  }
-
-  // 올바른 날짜값이면 한글이 호함된 포맷으로 에쁘게 바꿔줌
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
-}
+import useInviteHouse from "../../hooks/useInviteHouse";
+import { formatExpiry, makeReadableCode } from "../../utils/formatters";
 
 function InviteHousePage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const [copiedTarget, setCopiedTarget] = useState(null);
-
-  const houseName = location.state?.houseName;
-  const inviteCode = location.state?.inviteCode;
-  const inviteUrl = location.state?.inviteUrl;
-  const expiresAt = location.state?.expiresAt;
-
-  useEffect(() => {
-    if (!inviteCode || !inviteUrl) {
-      navigate("/create-house", { replace: true });
-    }
-  }, [inviteCode, inviteUrl, navigate]);
+  const {
+    houseName,
+    inviteCode,
+    inviteUrl,
+    expiresAt,
+    copiedTarget,
+    copy,
+    handleStartHouse,
+  } = useInviteHouse();
 
   if (!inviteCode || !inviteUrl) {
     return null;
-  }
-
-  async function copy(value, target) {
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopiedTarget(target);
-
-      window.setTimeout(() => {
-        setCopiedTarget(null);
-      }, 2000);
-    } catch {
-      alert("복사하지 못했어요. 다시 시도해 주세요.");
-    }
-  }
-
-  function handleStartHouse() {
-    navigate("/home", {
-      state: {
-        groupId: location.state?.groupId,
-        houseName,
-      },
-    });
   }
 
   return (

@@ -1,63 +1,14 @@
-import { useState } from "react";
-import { useNavigate } from "react-router";
-
 import OnboardingShell from "../../components/OnboardingShell";
+import useCreateHouse from "../../hooks/useCreateHouse";
 
 function CreateHousePage() {
-  const navigate = useNavigate();
-
-  const [houseName, setHouseName] = useState("");
-  const [address, setAddress] = useState("");
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-
-    // 토큰 삭제, 세션 쿠키 전송을 위해 credentials: "include" 유지
-    const csrf = await fetch(`/api/auth/csrf`, {
-      credentials: "include",
-      
-    }).then((response) => response.json());
-
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      [csrf.headerName]: csrf.token,
-    };
-
-    const group = await fetch(`/api/groups`, {
-      method: "POST",
-      credentials: "include",
-      headers,
-      body: JSON.stringify({
-        name: houseName.trim(),
-      }),
-    }).then(async (response) => {
-      if (!response.ok) throw new Error("하우스 생성에 실패했습니다.");
-      return response.json();
-    });
-
-    const invitation = await fetch(`/api/groups/${group.groupId}/invitations`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        [csrf.headerName]: csrf.token,
-      },
-    }).then(async (response) => {
-      if (!response.ok) throw new Error("초대 링크 생성에 실패했습니다.");
-      return response.json();
-    });
-
-    navigate("/invite-house", {
-      state: {
-        houseName: group.name,
-        groupId: group.groupId,
-        inviteCode: invitation.code,
-        inviteUrl: invitation.inviteUrl,
-        expiresAt: invitation.expiresAt,
-      },
-    });
-  }
+  const {
+    houseName,
+    setHouseName,
+    address,
+    setAddress,
+    handleSubmit,
+  } = useCreateHouse();
 
   return (
     <OnboardingShell>
@@ -109,7 +60,9 @@ function CreateHousePage() {
               className="mb-2 block text-sm font-bold"
             >
               주소{" "}
-              <span className="text-xs font-normal text-[#8B8575]">(선택)</span>
+              <span className="text-xs font-normal text-[#8B8575]">
+                (선택)
+              </span>
             </label>
 
             <input
