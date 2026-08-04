@@ -1,13 +1,69 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
+
+import { getCurrentUser } from "../../api/authApi";
+import { buildBackendUrl } from "../../api/apiConfig";
 import googleIcon from "../../assets/images/google-g-logo.png";
 import naverLoginButton from "../../assets/images/naver-login-button.png";
 
 function LoginPage() {
-  // URL에 ?error=true가 있다면 OAuth 로그인 실패로 판단
-  const loginFailed =
-    new URLSearchParams(window.location.search).get("error") === "true";
+  const navigate = useNavigate();
 
+  // URL에 ?error=true가 있다면 OAuth 로그인 실패로 판단합니다.
+  const loginFailed =
+    new URLSearchParams(
+      window.location.search,
+    ).get("error") === "true";
+
+  // OAuth 로그인 후 백엔드가 localhost:5173/로 돌려보내면
+  // 현재 로그인 사용자 정보를 조회합니다.
+  useEffect(() => {
+    // OAuth 실패로 돌아온 경우에는 조회하지 않습니다.
+    if (loginFailed) {
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    async function checkLoginSession() {
+      try {
+        const user = await getCurrentUser();
+
+        if (cancelled) {
+          return;
+        }
+
+        // 로그인 확인을 위해 개발자 도구 콘솔에도 표시합니다.
+        console.log("로그인한 사용자:", user);
+
+        // 현재 백엔드 /api/auth/me 응답에는
+        // 사용자의 하우스 정보가 포함되어 있지 않습니다.
+        //
+        // 따라서 로그인 성공 시 우선 하우스 선택 화면으로
+        // 이동하도록 처리합니다.
+        navigate("/house-choice", {
+          replace: true,
+        });
+      } catch {
+        // 로그인하지 않은 상태로 처음 접속했을 때
+        // 사용자 조회가 실패하는 것은 정상입니다.
+        console.log("현재 로그인 세션이 없습니다.");
+      }
+    }
+
+    checkLoginSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loginFailed, navigate]);
+
+  // OAuth 로그인은 fetch 요청이 아니라
+  // 백엔드 로그인 주소로 브라우저 전체를 이동해야 합니다.
   function handleSocialLogin(provider) {
-    window.location.href = `/oauth2/authorization/${provider}`;
+    window.location.href = buildBackendUrl(
+      `/oauth2/authorization/${provider}`,
+    );
   }
 
   return (
@@ -62,7 +118,9 @@ function LoginPage() {
 
         {/* 로그인 카드 */}
         <section className="rounded-[28px] border border-[#1A1428]/10 bg-white p-8 shadow-xl">
-          <h2 className="m-0 mb-6 text-center text-sm font-bold">시작하기</h2>
+          <h2 className="m-0 mb-6 text-center text-sm font-bold">
+            시작하기
+          </h2>
 
           {/* 로그인 실패 안내 */}
           {loginFailed && (
@@ -74,10 +132,12 @@ function LoginPage() {
             </p>
           )}
 
-          {/*구글 로그인 버튼 */}
+          {/* Google 로그인 버튼 */}
           <button
             type="button"
-            onClick={() => handleSocialLogin("google")}
+            onClick={() =>
+              handleSocialLogin("google")
+            }
             className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#F2F2F2] px-4 font-['Roboto'] text-sm font-medium leading-5 text-[#1F1F1F] transition hover:bg-[#E8E8E8] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B57D0]"
           >
             <img
@@ -93,7 +153,9 @@ function LoginPage() {
           {/* 네이버 로그인 버튼 */}
           <button
             type="button"
-            onClick={() => handleSocialLogin("naver")}
+            onClick={() =>
+              handleSocialLogin("naver")
+            }
             aria-label="네이버 로그인"
             className="mt-3 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-[#03A94D] transition hover:brightness-95 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03A94D]"
           >
@@ -105,29 +167,38 @@ function LoginPage() {
           </button>
 
           <p className="mb-0 ml-0 mr-0 mt-6 text-center text-[11px] leading-5 text-[#8B8575]">
-            계속하면 서비스 이용약관 및 개인정보 처리방침에 동의하게
-            됩니다.
+            계속하면 서비스 이용약관 및 개인정보 처리방침에
+            동의하게 됩니다.
           </p>
         </section>
 
         {/* 주요 기능 안내 */}
         <ul className="mb-0 ml-0 mr-0 mt-6 flex list-none justify-center gap-5 p-0 text-xs text-[#8B8575]">
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             자동 순환 배정
           </li>
 
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             대타 요청
           </li>
 
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             공간 예약
