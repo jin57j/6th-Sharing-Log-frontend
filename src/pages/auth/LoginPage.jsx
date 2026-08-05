@@ -1,14 +1,14 @@
 import googleIcon from "../../assets/images/google-g-logo.png";
 import naverLoginButton from "../../assets/images/naver-login-button.png";
+import useLoginSession from "../../hooks/useLoginSession";
 
 function LoginPage() {
-  // URL에 ?error=true가 있다면 OAuth 로그인 실패로 판단
-  const loginFailed =
-    new URLSearchParams(window.location.search).get("error") === "true";
-
-  function handleSocialLogin(provider) {
-    window.location.href = `/oauth2/authorization/${provider}`;
-  }
+  const {
+    loginFailed,
+    isCheckingSession,
+    sessionError,
+    handleSocialLogin,
+  } = useLoginSession();
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F8F4EE] p-5 font-sans text-[#1A1428]">
@@ -62,9 +62,21 @@ function LoginPage() {
 
         {/* 로그인 카드 */}
         <section className="rounded-[28px] border border-[#1A1428]/10 bg-white p-8 shadow-xl">
-          <h2 className="m-0 mb-6 text-center text-sm font-bold">시작하기</h2>
+          <h2 className="m-0 mb-6 text-center text-sm font-bold">
+            시작하기
+          </h2>
 
-          {/* 로그인 실패 안내 */}
+          {/* 로그인 세션 확인 중 안내 */}
+          {isCheckingSession && (
+            <p
+              role="status"
+              className="mb-4 rounded-xl bg-[#EFEBE2]/60 px-4 py-3 text-center text-xs font-semibold leading-5 text-[#8B8575]"
+            >
+              로그인 정보를 확인하고 있어요...
+            </p>
+          )}
+
+          {/* OAuth 로그인 실패 안내 */}
           {loginFailed && (
             <p
               role="alert"
@@ -74,11 +86,22 @@ function LoginPage() {
             </p>
           )}
 
-          {/*구글 로그인 버튼 */}
+          {/* 사용자·하우스 정보 조회 실패 안내 */}
+          {sessionError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-xl border border-[#E63946]/20 bg-[#E63946]/5 px-4 py-3 text-center text-xs font-semibold leading-5 text-[#E63946]"
+            >
+              {sessionError}
+            </p>
+          )}
+
+          {/* Google 로그인 버튼 */}
           <button
             type="button"
             onClick={() => handleSocialLogin("google")}
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#F2F2F2] px-4 font-['Roboto'] text-sm font-medium leading-5 text-[#1F1F1F] transition hover:bg-[#E8E8E8] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B57D0]"
+            disabled={isCheckingSession}
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#F2F2F2] px-4 font-['Roboto'] text-sm font-medium leading-5 text-[#1F1F1F] transition hover:bg-[#E8E8E8] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B57D0]"
           >
             <img
               src={googleIcon}
@@ -94,8 +117,9 @@ function LoginPage() {
           <button
             type="button"
             onClick={() => handleSocialLogin("naver")}
+            disabled={isCheckingSession}
             aria-label="네이버 로그인"
-            className="mt-3 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-[#03A94D] transition hover:brightness-95 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03A94D]"
+            className="mt-3 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-[#03A94D] transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03A94D]"
           >
             <img
               src={naverLoginButton}
@@ -105,29 +129,38 @@ function LoginPage() {
           </button>
 
           <p className="mb-0 ml-0 mr-0 mt-6 text-center text-[11px] leading-5 text-[#8B8575]">
-            계속하면 서비스 이용약관 및 개인정보 처리방침에 동의하게
-            됩니다.
+            계속하면 서비스 이용약관 및 개인정보 처리방침에
+            동의하게 됩니다.
           </p>
         </section>
 
         {/* 주요 기능 안내 */}
         <ul className="mb-0 ml-0 mr-0 mt-6 flex list-none justify-center gap-5 p-0 text-xs text-[#8B8575]">
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             자동 순환 배정
           </li>
 
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             대타 요청
           </li>
 
           <li className="flex items-center gap-1.5">
-            <span className="text-base text-[#06D6A0]" aria-hidden="true">
+            <span
+              className="text-base text-[#06D6A0]"
+              aria-hidden="true"
+            >
               ✓
             </span>
             공간 예약

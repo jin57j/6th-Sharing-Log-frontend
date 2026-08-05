@@ -20,8 +20,12 @@ export default function useCreateHouse() {
     // 2. 사용자가 입력한 이름으로 하우스를 생성합니다.
     const group = await createGroup({
       name: houseName.trim(),
+
+      // 입력하지 않았다면 null, 입력했다면 공백을 제거하여 전달
+      address: address.trim() || null,
+
       csrf,
-    });
+   });
 
     // 3. 생성된 하우스의 초대 코드를 발급합니다.
     const invitation = await createInvitation({
