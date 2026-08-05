@@ -1,84 +1,132 @@
-import { useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   getDeadlineOccurrences,
+  getNotificationSummary,
   getSubstituteRequests,
   respondToSubstituteRequest,
 } from "../api/notificationApi";
 
-// TODO:
-// 실제 하우스 선택 상태가 연결되면
-// 선택한 하우스의 groupPublicId로 교체해야 함
-const TEMPORARY_GROUP_PUBLIC_ID = "group-1";
+// 아직 알림 데이터가 없을 때 사용할 기본값
+const EMPTY_SUMMARY = {
+  dueSoonCount: 0,
+  pendingSubstituteRequestCount: 0,
+  unreadCount: 0,
+};
 
-export default function useNotifications() {
-  const [deadlineItems, setDeadlineItems] = useState([]);
-  const [substituteRequests, setSubstituteRequests] = useState([]);
+export default function useNotifications(
+  groupId,
+) {
+  // 백엔드의 알림 개수 요약
+  const [summary, setSummary] =
+    useState(EMPTY_SUMMARY);
 
-  const [loading, setLoading] = useState(true);
-  const [respondingRequestId, setRespondingRequestId] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
+  // 내가 담당한 미완료 업무
+  const [deadlineItems, setDeadlineItems] =
+    useState([]);
 
-  // 새로고침 버튼을 눌렀을 때 실행하는 함수
-  async function loadNotifications() {
-    try {
-      setLoading(true);
-      setErrorMessage("");
+  // 내가 받은 미응답 대타 요청
+  const [
+    substituteRequests,
+    setSubstituteRequests,
+  ] = useState([]);
 
-      const [occurrences, requests] = await Promise.all([
-        getDeadlineOccurrences(TEMPORARY_GROUP_PUBLIC_ID),
-        getSubstituteRequests(TEMPORARY_GROUP_PUBLIC_ID),
-      ]);
+  const [loading, setLoading] =
+    useState(true);
 
-      setDeadlineItems(occurrences);
-      setSubstituteRequests(requests);
-    } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const [
+    respondingRequestId,
+    setRespondingRequestId,
+  ] = useState(null);
 
-  // 알림 화면이 처음 열렸을 때 실행
-  useEffect(() => {
-    let cancelled = false;
+  const [
+    errorMessage,
+    setErrorMessage,
+  ] = useState("");
 
-    async function loadInitialNotifications() {
+  // 알림 관련 데이터를 백엔드에서 다시 조회합니다.
+  const loadNotifications = useCallback(
+    async (showLoading = true) => {
+      // 하우스 정보를 아직 가져오지 못했다면
+      // 잘못된 groupId로 API를 호출하지 않습니다.
+      if (!groupId) {
+        setSummary(EMPTY_SUMMARY);
+        setDeadlineItems([]);
+        setSubstituteRequests([]);
+        setLoading(false);
+
+        return;
+      }
+
       try {
-        const [occurrences, requests] = await Promise.all([
-          getDeadlineOccurrences(TEMPORARY_GROUP_PUBLIC_ID),
-          getSubstituteRequests(TEMPORARY_GROUP_PUBLIC_ID),
+        if (showLoading) {
+          setLoading(true);
+        }
+
+        setErrorMessage("");
+
+        // 서로 의존하지 않는 세 요청을 동시에 실행합니다.
+        const [
+          summaryResponse,
+          occurrences,
+          requests,
+        ] = await Promise.all([
+          getNotificationSummary(groupId),
+          getDeadlineOccurrences(groupId),
+          getSubstituteRequests(groupId),
         ]);
 
-        // 화면이 사라진 뒤에는 상태를 변경하지 않음
-        if (cancelled) {
-          return;
-        }
+        setSummary(
+          summaryResponse ?? EMPTY_SUMMARY,
+        );
 
         setDeadlineItems(occurrences);
         setSubstituteRequests(requests);
       } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(error.message);
-        }
+        setErrorMessage(
+          error.message ??
+            "알림을 불러오지 못했습니다.",
+        );
       } finally {
-        if (!cancelled) {
+        if (showLoading) {
           setLoading(false);
         }
       }
-    }
+    },
+    [groupId],
+  );
 
-    loadInitialNotifications();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // groupId를 가져오면 알림을 처음 조회합니다.
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
   // 대타 요청 수락 또는 거절
-  async function handleSubstituteResponse(requestId, action) {
-    // 다른 요청을 처리 중이면 중복 요청 방지
+  async function handleSubstituteResponse(
+    requestId,
+    action,
+  ) {
+    // 이미 다른 요청을 처리 중이면 중복 실행하지 않습니다.
     if (respondingRequestId) {
+      return;
+    }
+
+    // 현재 화면에 있는 요청에서 version을 찾습니다.
+    const targetRequest =
+      substituteRequests.find(
+        (request) =>
+          request.requestId === requestId,
+      );
+
+    if (!targetRequest) {
+      setErrorMessage(
+        "대타 요청 정보를 찾을 수 없습니다.",
+      );
+
       return;
     }
 
@@ -86,45 +134,44 @@ export default function useNotifications() {
       setRespondingRequestId(requestId);
       setErrorMessage("");
 
-      const updatedRequest = await respondToSubstituteRequest({
-        groupId: TEMPORARY_GROUP_PUBLIC_ID,
+      await respondToSubstituteRequest({
+        groupId,
         requestId,
         action,
+
+        // 백엔드의 If-Match 헤더에 사용할 값입니다.
+        version: targetRequest.version,
       });
 
-      setSubstituteRequests((currentRequests) =>
-        currentRequests.map((request) =>
-          request.requestId === requestId
-            ? {
-                ...updatedRequest,
-
-                // 화면에서 수락과 거절 결과를 구분하는 프론트 전용 값
-                myResponse: action,
-              }
-            : request,
-        ),
-      );
+      // 수락 또는 거절이 성공하면 목록과 숫자를 다시 조회합니다.
+      // PENDING 상태가 아니게 된 요청은 목록에서 사라집니다.
+      await loadNotifications(false);
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage(
+        error.message ??
+          "대타 요청을 처리하지 못했습니다.",
+      );
     } finally {
       setRespondingRequestId(null);
     }
   }
 
-  const notificationCount =
-    deadlineItems.length +
-    substituteRequests.filter(
-      (request) => !request.myResponse,
-    ).length;
-
   return {
+    summary,
     deadlineItems,
     substituteRequests,
-    notificationCount,
+
+    // 사이드바 배지에는 백엔드가 계산한 값을 사용합니다.
+    notificationCount:
+      summary.unreadCount ?? 0,
+
     loading,
     respondingRequestId,
     errorMessage,
-    reload: loadNotifications,
+
+    // 새로고침 버튼에서 사용합니다.
+    reload: () => loadNotifications(true),
+
     handleSubstituteResponse,
   };
 }
