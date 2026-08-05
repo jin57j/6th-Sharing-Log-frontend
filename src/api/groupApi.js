@@ -101,3 +101,81 @@ export async function getMyGroup() {
 
   return response.json();
 }
+
+// 하우스 탈퇴 API에서 전달한 오류를 읽는 함수
+async function createGroupApiError(
+  response,
+  fallbackMessage,
+) {
+  const contentType =
+    response.headers.get("content-type") ?? "";
+
+  let body = null;
+
+  // application/json과 application/problem+json을 모두 처리합니다.
+  if (contentType.includes("json")) {
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+  }
+
+  const error = new Error(
+    body?.detail ??
+      body?.title ??
+      fallbackMessage,
+  );
+
+  error.status = response.status;
+  error.code = body?.code;
+
+  return error;
+}
+
+// 현재 로그인한 사용자가 자신의 하우스에서 탈퇴하는 함수
+export async function leaveGroup({
+  groupPublicId,
+  membershipPublicId,
+  membershipVersion,
+  csrf,
+}) {
+  // 이번 탈퇴 요청을 식별할 고유한 문자열을 생성합니다.
+  // 동일한 요청이 중복 처리되는 것을 방지하기 위해 사용합니다.
+  const idempotencyKey = crypto.randomUUID();
+
+  const response = await fetch(
+    buildBackendUrl(
+      `/api/groups/${groupPublicId}/members/${membershipPublicId}/leave`,
+    ),
+    {
+      method: "POST",
+
+      // 로그인 세션 쿠키를 함께 보냅니다.
+      credentials: "include",
+
+      headers: {
+        Accept: "application/json",
+
+        // Spring Security의 CSRF 검사를 통과하기 위한 헤더
+        [csrf.headerName]: csrf.token,
+
+        // 동일한 탈퇴 요청이 중복 실행되는 것을 방지합니다.
+        "Idempotency-Key": idempotencyKey,
+
+        // 현재 멤버십 버전을 큰따옴표로 감싸 전달합니다.
+        // 예: membershipVersion이 0이면 If-Match의 값은 "0"
+        "If-Match": `"${membershipVersion}"`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw await createGroupApiError(
+      response,
+      "하우스에서 탈퇴하지 못했습니다.",
+    );
+  }
+
+  return response.json();
+}
