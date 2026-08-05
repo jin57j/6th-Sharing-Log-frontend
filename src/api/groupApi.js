@@ -28,7 +28,11 @@ async function getErrorMessage(response) {
 }
 
 // 새로운 하우스를 생성하는 함수
-export async function createGroup({ name, csrf }) {
+export async function createGroup({
+  name,
+  address,
+  csrf,
+}) {
   const response = await fetch(
     buildBackendUrl("/api/groups"),
     {
@@ -47,6 +51,7 @@ export async function createGroup({ name, csrf }) {
 
       body: JSON.stringify({
         name,
+        address,
       }),
     },
   );
