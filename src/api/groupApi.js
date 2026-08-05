@@ -57,3 +57,47 @@ export async function createGroup({ name, csrf }) {
 
   return response.json();
 }
+
+// 현재 로그인한 사용자의 활성 하우스를 조회하는 함수
+export async function getMyGroup() {
+  const response = await fetch(
+    buildBackendUrl("/api/groups/me"),
+    {
+      method: "GET",
+
+      // 로그인 세션 쿠키를 함께 보냅니다.
+      credentials: "include",
+
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  // 현재 백엔드는 가입한 하우스가 없을 때 404를 반환합니다.
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (response.status === 401) {
+    const error = new Error(
+      "로그인이 필요합니다.",
+    );
+
+    error.status = response.status;
+
+    throw error;
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      "하우스 정보를 불러오지 못했습니다.",
+    );
+
+    error.status = response.status;
+
+    throw error;
+  }
+
+  return response.json();
+}

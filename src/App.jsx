@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router";
 
 import LoginPage from "./pages/auth/LoginPage";
+import ProfileSetupPage from "./pages/auth/ProfileSetupPage";
 import SelectHousePage from "./pages/house/SelectHousePage";
 import CreateHousePage from "./pages/house/CreateHousePage";
 import InviteHousePage from "./pages/house/InviteHousePage";
@@ -21,6 +22,8 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
+
+      <Route path="/profile-setup" element={<ProfileSetupPage />} />
 
       <Route path="/house-choice" element={<SelectHousePage />} />
 
