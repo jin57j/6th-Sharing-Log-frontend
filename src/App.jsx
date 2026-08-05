@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router";
 
 import LoginPage from "./pages/auth/LoginPage";
+import ProfileSetupPage from "./pages/auth/ProfileSetupPage";
 import SelectHousePage from "./pages/house/SelectHousePage";
 import CreateHousePage from "./pages/house/CreateHousePage";
 import InviteHousePage from "./pages/house/InviteHousePage";
@@ -15,12 +16,15 @@ import Reservation from "./pages/dashboard/Reservation";
 import CompletedTasks from "./pages/dashboard/CompletedTasks";
 import Notice from "./pages/dashboard/Notice";
 import Notification from "./pages/dashboard/Notification";
+import AccountPage from "./pages/dashboard/AccountPage";
 // 메인 대시보드
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LoginPage />} />
+
+      <Route path="/profile-setup" element={<ProfileSetupPage />} />
 
       <Route path="/house-choice" element={<SelectHousePage />} />
 
@@ -42,6 +46,7 @@ function App() {
         <Route path="/notice" element={<Notice />} />
 
         <Route path="/notification" element={<Notification />} />
+        <Route path="/account" element={<AccountPage />} />
       </Route>
     </Routes>
   );

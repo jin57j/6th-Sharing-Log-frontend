@@ -1,70 +1,14 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
-
-import { getCurrentUser } from "../../api/authApi";
-import { buildBackendUrl } from "../../api/apiConfig";
 import googleIcon from "../../assets/images/google-g-logo.png";
 import naverLoginButton from "../../assets/images/naver-login-button.png";
+import useLoginSession from "../../hooks/useLoginSession";
 
 function LoginPage() {
-  const navigate = useNavigate();
-
-  // URL에 ?error=true가 있다면 OAuth 로그인 실패로 판단합니다.
-  const loginFailed =
-    new URLSearchParams(
-      window.location.search,
-    ).get("error") === "true";
-
-  // OAuth 로그인 후 백엔드가 localhost:5173/로 돌려보내면
-  // 현재 로그인 사용자 정보를 조회합니다.
-  useEffect(() => {
-    // OAuth 실패로 돌아온 경우에는 조회하지 않습니다.
-    if (loginFailed) {
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    async function checkLoginSession() {
-      try {
-        const user = await getCurrentUser();
-
-        if (cancelled) {
-          return;
-        }
-
-        // 로그인 확인을 위해 개발자 도구 콘솔에도 표시합니다.
-        console.log("로그인한 사용자:", user);
-
-        // 현재 백엔드 /api/auth/me 응답에는
-        // 사용자의 하우스 정보가 포함되어 있지 않습니다.
-        //
-        // 따라서 로그인 성공 시 우선 하우스 선택 화면으로
-        // 이동하도록 처리합니다.
-        navigate("/house-choice", {
-          replace: true,
-        });
-      } catch {
-        // 로그인하지 않은 상태로 처음 접속했을 때
-        // 사용자 조회가 실패하는 것은 정상입니다.
-        console.log("현재 로그인 세션이 없습니다.");
-      }
-    }
-
-    checkLoginSession();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [loginFailed, navigate]);
-
-  // OAuth 로그인은 fetch 요청이 아니라
-  // 백엔드 로그인 주소로 브라우저 전체를 이동해야 합니다.
-  function handleSocialLogin(provider) {
-    window.location.href = buildBackendUrl(
-      `/oauth2/authorization/${provider}`,
-    );
-  }
+  const {
+    loginFailed,
+    isCheckingSession,
+    sessionError,
+    handleSocialLogin,
+  } = useLoginSession();
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#F8F4EE] p-5 font-sans text-[#1A1428]">
@@ -122,7 +66,17 @@ function LoginPage() {
             시작하기
           </h2>
 
-          {/* 로그인 실패 안내 */}
+          {/* 로그인 세션 확인 중 안내 */}
+          {isCheckingSession && (
+            <p
+              role="status"
+              className="mb-4 rounded-xl bg-[#EFEBE2]/60 px-4 py-3 text-center text-xs font-semibold leading-5 text-[#8B8575]"
+            >
+              로그인 정보를 확인하고 있어요...
+            </p>
+          )}
+
+          {/* OAuth 로그인 실패 안내 */}
           {loginFailed && (
             <p
               role="alert"
@@ -132,13 +86,22 @@ function LoginPage() {
             </p>
           )}
 
+          {/* 사용자·하우스 정보 조회 실패 안내 */}
+          {sessionError && (
+            <p
+              role="alert"
+              className="mb-4 rounded-xl border border-[#E63946]/20 bg-[#E63946]/5 px-4 py-3 text-center text-xs font-semibold leading-5 text-[#E63946]"
+            >
+              {sessionError}
+            </p>
+          )}
+
           {/* Google 로그인 버튼 */}
           <button
             type="button"
-            onClick={() =>
-              handleSocialLogin("google")
-            }
-            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#F2F2F2] px-4 font-['Roboto'] text-sm font-medium leading-5 text-[#1F1F1F] transition hover:bg-[#E8E8E8] active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B57D0]"
+            onClick={() => handleSocialLogin("google")}
+            disabled={isCheckingSession}
+            className="flex h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#F2F2F2] px-4 font-['Roboto'] text-sm font-medium leading-5 text-[#1F1F1F] transition hover:bg-[#E8E8E8] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0B57D0]"
           >
             <img
               src={googleIcon}
@@ -153,11 +116,10 @@ function LoginPage() {
           {/* 네이버 로그인 버튼 */}
           <button
             type="button"
-            onClick={() =>
-              handleSocialLogin("naver")
-            }
+            onClick={() => handleSocialLogin("naver")}
+            disabled={isCheckingSession}
             aria-label="네이버 로그인"
-            className="mt-3 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-[#03A94D] transition hover:brightness-95 active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03A94D]"
+            className="mt-3 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-[#03A94D] transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#03A94D]"
           >
             <img
               src={naverLoginButton}
