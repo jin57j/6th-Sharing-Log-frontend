@@ -18,6 +18,27 @@ const EMPTY_SUMMARY = {
   unreadCount: 0,
 };
 
+// 알림에 필요한 세 종류의 데이터를 동시에 조회합니다.
+async function requestNotifications(groupId) {
+  const [
+    summaryResponse,
+    occurrences,
+    requests,
+  ] = await Promise.all([
+    getNotificationSummary(groupId),
+    getDeadlineOccurrences(groupId),
+    getSubstituteRequests(groupId),
+  ]);
+
+  return {
+    summary:
+      summaryResponse ?? EMPTY_SUMMARY,
+
+    occurrences,
+    requests,
+  };
+}
+
 export default function useNotifications(
   groupId,
 ) {
@@ -48,7 +69,8 @@ export default function useNotifications(
     setErrorMessage,
   ] = useState("");
 
-  // 알림 관련 데이터를 백엔드에서 다시 조회합니다.
+  // 새로고침 또는 대타 처리 후
+  // 알림 데이터를 다시 조회하는 함수입니다.
   const loadNotifications = useCallback(
     async (showLoading = true) => {
       // 하우스 정보를 아직 가져오지 못했다면
@@ -69,21 +91,15 @@ export default function useNotifications(
 
         setErrorMessage("");
 
-        // 서로 의존하지 않는 세 요청을 동시에 실행합니다.
-        const [
-          summaryResponse,
+        const {
+          summary: nextSummary,
           occurrences,
           requests,
-        ] = await Promise.all([
-          getNotificationSummary(groupId),
-          getDeadlineOccurrences(groupId),
-          getSubstituteRequests(groupId),
-        ]);
-
-        setSummary(
-          summaryResponse ?? EMPTY_SUMMARY,
+        } = await requestNotifications(
+          groupId,
         );
 
+        setSummary(nextSummary);
         setDeadlineItems(occurrences);
         setSubstituteRequests(requests);
       } catch (error) {
@@ -102,8 +118,54 @@ export default function useNotifications(
 
   // groupId를 가져오면 알림을 처음 조회합니다.
   useEffect(() => {
-    loadNotifications();
-  }, [loadNotifications]);
+    // 하우스 ID가 아직 없다면
+    // 백엔드에 요청하지 않습니다.
+    if (!groupId) {
+      return undefined;
+    }
+
+    // 화면이 사라진 뒤에는
+    // 비동기 응답으로 상태를 변경하지 않습니다.
+    let cancelled = false;
+
+    async function loadInitialNotifications() {
+      try {
+        const {
+          summary: nextSummary,
+          occurrences,
+          requests,
+        } = await requestNotifications(
+          groupId,
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        setSummary(nextSummary);
+        setDeadlineItems(occurrences);
+        setSubstituteRequests(requests);
+        setErrorMessage("");
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(
+            error.message ??
+              "알림을 불러오지 못했습니다.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadInitialNotifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [groupId]);
 
   // 대타 요청 수락 또는 거절
   async function handleSubstituteResponse(
@@ -143,8 +205,7 @@ export default function useNotifications(
         version: targetRequest.version,
       });
 
-      // 수락 또는 거절이 성공하면 목록과 숫자를 다시 조회합니다.
-      // PENDING 상태가 아니게 된 요청은 목록에서 사라집니다.
+      // 수락 또는 거절 후 목록과 숫자를 다시 조회합니다.
       await loadNotifications(false);
     } catch (error) {
       setErrorMessage(
@@ -165,7 +226,9 @@ export default function useNotifications(
     notificationCount:
       summary.unreadCount ?? 0,
 
-    loading,
+    // groupId가 없다면 로딩 화면을 계속 표시하지 않습니다.
+    loading: Boolean(groupId) && loading,
+
     respondingRequestId,
     errorMessage,
 
