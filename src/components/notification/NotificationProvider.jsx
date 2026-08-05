@@ -1,13 +1,19 @@
-// useNotifications()를 한 번 실행 후
-// 그 결과를 사이드바와 알림 화면에 함께 전달해줌
 import NotificationContext from "../../contexts/notificationContext";
 import useNotifications from "../../hooks/useNotifications";
 
-export default function NotificationProvider({ children }) {
-  const notificationState = useNotifications();
+export default function NotificationProvider({
+  groupId,
+  children,
+}) {
+  // Layout에서 전달받은 실제 groupPublicId로
+  // 알림 API를 호출합니다.
+  const notificationState =
+    useNotifications(groupId);
 
   return (
-    <NotificationContext.Provider value={notificationState}>
+    <NotificationContext.Provider
+      value={notificationState}
+    >
       {children}
     </NotificationContext.Provider>
   );
