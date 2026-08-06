@@ -1,102 +1,18 @@
-
-import { useState, useEffect } from "react";
 import ChoreModal from "../../components/common/ChoreModal";
-import { choreApi } from "../../api/choreApi";
-import { getCurrentUser } from "../../api/authApi"; 
-import { getMyGroup } from "../../api/groupApi";
+import useTasks from "../../hooks/useTasks";
 
 export default function Task() {
-  const [groupId, setGroupId] = useState(null); 
-  const [chores, setChores] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingChore, setEditingChore] = useState(null);
-
-  useEffect(() => {
-    const fetchUserGroup = async () => {
-      try {
-        console.log("그룹 정보 요청 시작...");
-        const response = await getMyGroup();
-        console.log("서버에서 받은 그룹 응답 전체:", response);
-
-        const group = response?.data || response;
-        const targetGroupId = group?.groupPublicId;
-
-        if (targetGroupId) {
-          setGroupId(targetGroupId);
-          console.log("✅ 그룹 ID 세팅 성공:", targetGroupId);
-        } else {
-          console.error("❌ 그룹 데이터 안에 groupPublicID가 없습니다:", group);
-        }
-      } catch (error) {
-        console.error("❌ 그룹 정보를 가져오는 중 에러 발생:", error);
-      }
-    };
-
-    fetchUserGroup();
-  }, []);
-
-  const loadChores = async (currentGroupId) => {
-    try {
-      const data = await choreApi.getChores(currentGroupId);
-      setChores(data.items || data || []);
-    } catch (error) {
-      console.error("Failed to fetch chores:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (!groupId) return; 
-    loadChores(groupId);
-  }, [groupId]);
-
-  const openAddModal = () => {
-    setEditingChore(null);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (chore) => {
-    setEditingChore(chore);
-    setIsModalOpen(true);
-  };
-
-  // 🌟 3. 폼 제출 핸들러 (수정 시 version 전달 추가)
-  const handleChoreSubmit = async (formData) => {
-    if (!groupId) return;
-
-    try {
-      if (editingChore) {
-        // [수정] - API에 4번째 인자로 버전을 문자열로 전달합니다!
-        await choreApi.updateChore(
-          groupId, 
-          editingChore.choreId, 
-          formData, 
-          String(editingChore.version) // 👈 기존 데이터의 version 전달
-        );
-      } else {
-        // [생성]
-        await choreApi.createChore(groupId, formData);
-      }
-
-      await loadChores(groupId); 
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error("Failed to submit chore:", error);
-    }
-  };
-
-  // 🌟 4. 삭제 핸들러 (version 파라미터 추가)
-  const handleDelete = async (choreId, version) => { // 👈 version 파라미터 추가
-    if (!groupId) return;
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
-
-    try {
-      // API에 3번째 인자로 버전을 문자열로 전달합니다!
-      await choreApi.deleteChore(groupId, choreId, String(version)); // 👈 version 전달
-      loadChores(groupId); 
-    } catch (error) {
-      console.error("Failed to delete chore:", error);
-    }
-  };
+  // 🌟 분리된 훅에서 필요한 데이터와 핸들러를 꺼내옵니다.
+  const {
+    chores,
+    isModalOpen,
+    editingChore,
+    openAddModal,
+    openEditModal,
+    closeModal,
+    handleChoreSubmit,
+    handleDelete,
+  } = useTasks();
 
   return (
     <div className="min-h-screen p-8 font-sans bg-[#F7F4EF]">
@@ -162,8 +78,7 @@ export default function Task() {
                   </button>
 
                   <button
-                    // 🌟 클릭 시 choreId와 함께 version 데이터도 같이 넘겨줍니다!
-                    onClick={() => handleDelete(chore.choreId, chore.version)} 
+                    onClick={() => handleDelete(chore.choreId, chore.version)}
                     className="p-2 text-gray-400 transition-colors hover:text-red-500"
                   >
                     🗑️
@@ -183,7 +98,7 @@ export default function Task() {
         <ChoreModal
           key={editingChore ? editingChore.choreId : "new-chore"}
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={closeModal} // 👈 훅에서 가져온 닫기 함수 연결
           initialData={editingChore}
           onSubmit={handleChoreSubmit}
         />
