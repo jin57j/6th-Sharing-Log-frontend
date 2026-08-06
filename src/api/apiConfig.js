@@ -20,9 +20,7 @@ export const BACKEND_ORIGIN = backendOrigin.replace(/\/+$/, "");
 // buildBackendUrl("/api/auth/me")
 // → https://sharinglog-43-200-12-73.sslip.io/api/auth/me
 export function buildBackendUrl(path) {
-  const normalizedPath = path.startsWith("/")
-    ? path
-    : `/${path}`;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
   return `${BACKEND_ORIGIN}${normalizedPath}`;
 }
