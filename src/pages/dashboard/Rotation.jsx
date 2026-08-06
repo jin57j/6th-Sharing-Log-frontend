@@ -58,6 +58,8 @@ export default function Rotation() {
     };
     fetchUserGroup();
   }, []);
+  useEffect(() => {
+    if (!groupId) return; // 👈 그룹 ID가 아직 없으면 요청을 보내지 않음
 
   useEffect(() => {
     if (!groupId) return;
