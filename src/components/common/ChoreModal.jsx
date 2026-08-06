@@ -5,7 +5,10 @@ export default function ChoreModal({ isOpen, onClose, onSubmit, initialData }) {
   const [frequency, setFrequency] = useState(
     initialData?.schedule?.frequency || "WEEKLY",
   );
-  const [dueDate, setDueDate] = useState(initialData?.schedule?.dueTime || "");
+  // 백엔드가 요구하는 시간 형식에 맞게 기본값 설정 (예: "20:00:00" 또는 "20:00")
+  const [dueDate, setDueDate] = useState(
+    initialData?.schedule?.dueTime || "20:00",
+  );
 
   // 모달이 닫혀있으면 아무것도 렌더링하지 않음
   if (!isOpen) return null;
@@ -13,13 +16,27 @@ export default function ChoreModal({ isOpen, onClose, onSubmit, initialData }) {
   // 폼 제출 핸들러
   const handleSubmit = (e) => {
     e.preventDefault();
+    // 🌟 1. 시간 포맷 맞추기 (HH:mm -> HH:mm:ss)
+    // 사용자가 "20:00"으로 입력했다면 "20:00:00"으로 변환
+    let formattedTime = dueDate || "20:00";
+    if (formattedTime.length === 5) {
+      formattedTime = `${formattedTime}:00`;
+    }
 
-    // 부모 컴포넌트로 전달할 데이터 객체
+    // 🌟 2. 명세에 따른 스케줄 필드 null 처리
+    const schedule = {
+      frequency,
+      dueTime: formattedTime,
+      weeklyDueDay: frequency === "WEEKLY" ? "MONDAY" : null, // 선택 안 된 건 반드시 null
+      biweeklyAnchorDate: frequency === "BIWEEKLY" ? "2026-08-05" : null, // 선택 안 된 건 반드시 null
+    };
+
     const choreData = {
       name,
-      schedule: {
-        frequency,
-        dueTime: dueDate,
+      schedule,
+      eligibility: {
+        mode: "ALL_ACTIVE_MEMBERS",
+        membershipIds: [],
       },
     };
 
@@ -72,7 +89,7 @@ export default function ChoreModal({ isOpen, onClose, onSubmit, initialData }) {
             />
           </div>
 
-          {/* 반복 유형 및 마감 날짜 (가로 배치) */}
+          {/* 반복 유형 및 마감 시간 (가로 배치) */}
           <div className="flex gap-4 mb-8">
             <div className="flex-1">
               <label className="block mb-2 text-sm font-bold text-gray-800">
@@ -91,14 +108,15 @@ export default function ChoreModal({ isOpen, onClose, onSubmit, initialData }) {
 
             <div className="flex-1">
               <label className="block mb-2 text-sm font-bold text-gray-800">
-                마감 날짜
+                마감 시간
               </label>
               <input
                 type="text"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                placeholder="매주 일요일 20:00"
+                placeholder="20:00"
                 className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-red-400"
+                required
               />
             </div>
           </div>

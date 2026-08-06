@@ -1,9 +1,55 @@
+import {
+  useOutletContext,
+} from "react-router";
+
 import ReservationForm from "../../components/reservation/ReservationForm";
 import ReservationList from "../../components/reservation/ReservationList";
 import SpaceForm from "../../components/reservation/SpaceForm";
 import useReservation from "../../hooks/useReservation";
 
 function Reservation() {
+  // Layout에서 조회한 현재 하우스 정보를 받습니다.
+  const { profile } = useOutletContext();
+
+  const {
+    group,
+    isLoading: isProfileLoading,
+    errorMessage: profileErrorMessage,
+  } = profile;
+
+  const groupId =
+    group?.groupPublicId ?? "";
+
+  const reservationState =
+    useReservation(groupId);
+
+  if (isProfileLoading) {
+    return (
+      <div className="grid min-h-full place-items-center p-5">
+        <p
+          role="status"
+          className="text-sm font-semibold text-[#8B8575]"
+        >
+          하우스 정보를 불러오는 중이에요...
+        </p>
+      </div>
+    );
+  }
+
+  if (profileErrorMessage || !groupId) {
+    return (
+      <div className="grid min-h-full place-items-center p-5">
+        <p
+          role="alert"
+          className="rounded-xl border border-[#E63946]/20 bg-[#E63946]/5 px-4 py-3 text-sm font-semibold text-[#E63946]"
+        >
+          {profileErrorMessage ||
+            "참여 중인 하우스가 없습니다."}
+        </p>
+      </div>
+    );
+  }
+
   const {
     today,
     spaces,
@@ -17,11 +63,12 @@ function Reservation() {
     handleAddSpace,
     handleReservation,
     handleCancel,
-  } = useReservation();
+  } = reservationState;
 
   const selectedSpace = spaces.find(
     (space) =>
-      String(space.spaceId) === String(selectedSpaceId),
+      String(space.spaceId) ===
+      String(selectedSpaceId),
   );
 
   return (
@@ -40,15 +87,23 @@ function Reservation() {
         <div className="mt-7 space-y-6">
           <ReservationForm
             spaces={spaces}
-            selectedSpaceId={selectedSpaceId}
-            setSelectedSpaceId={setSelectedSpaceId}
+            selectedSpaceId={
+              selectedSpaceId
+            }
+            setSelectedSpaceId={
+              setSelectedSpaceId
+            }
             today={today}
             selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
+            setSelectedDate={
+              setSelectedDate
+            }
             onSubmit={handleReservation}
           />
 
-          <SpaceForm onAddSpace={handleAddSpace} />
+          <SpaceForm
+            onAddSpace={handleAddSpace}
+          />
 
           {message && (
             <p
@@ -62,7 +117,8 @@ function Reservation() {
           <ReservationList
             selectedDate={selectedDate}
             selectedSpaceName={
-              selectedSpace?.name ?? "공간을 선택해 주세요"
+              selectedSpace?.name ??
+              "공간을 선택해 주세요"
             }
             loading={loading}
             reservations={reservations}

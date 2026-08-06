@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import { getAssignee } from "../../utils/rotationUtils"; // 유틸 함수 임포트 활성화 필요
+import { rotationApi } from "../../api/rotationApi"; // 🌟 API 파일 임포트
+import { getCurrentUser } from "../../api/authApi";
 
-// 🌟 추가된 부분: 오늘 날짜를 기준으로 동적 주차(월~일)를 계산하는 함수
+
+// 오늘 날짜를 기준으로 동적 주차(월~일)를 계산하는 함수
 const generateWeeks = () => {
   const today = new Date();
   const day = today.getDay();
-
-  // 이번 주 월요일 날짜 구하기 (일요일이 0이므로 예외 처리)
   const diff = today.getDate() - day + (day === 0 ? -6 : 1);
   const thisMonday = new Date(today.setDate(diff));
 
@@ -29,39 +29,47 @@ const generateWeeks = () => {
   return weeks;
 };
 
-export default function RotationPage() {
-  const [chores, setChores] = useState([]);
-
-  // 🌟 변경된 부분: 초기 탭을 목데이터가 주로 있는 'WEEKLY'로 변경
+export default function Rotation() {
+  const [groupId, setGroupId] = useState(null);
+  const [occurrences, setOccurrences] = useState([]); // 🌟 chores -> occurrences 로 변경
   const [activeTab, setActiveTab] = useState("WEEKLY");
   const [expandedWeek, setExpandedWeek] = useState(0);
-
-  // 계산된 날짜 데이터를 상태로 관리
   const [weeks, setWeeks] = useState([]);
 
   useEffect(() => {
     setWeeks(generateWeeks());
-
-    const fetchChores = async () => {
-      try {
-        // 🌟 수정 1: 목데이터의 groupId인 'group-001'로 주소 변경
-        const response = await fetch("/api/groups/group-001/chores");
-        if (response.ok) {
-          const data = await response.json();
-          // API 응답 구조에 맞게 세팅 (items 배열이 어디있는지 확인 필요, 만약 바로 배열이면 data로 세팅)
-          setChores(data.items || data || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch chores:", error);
-      }
-    };
-    fetchChores();
   }, []);
 
-  // 선택된 탭에 맞게 필터링
-  const filteredChores = chores.filter(
-    (chore) => chore.schedule?.frequency === activeTab,
-  );
+  useEffect(() => {
+    const fetchUserGroup = async () => {
+      try {
+        const userData = await getCurrentUser(); // 또는 그룹 정보를 주는 API
+        // 콘솔에 찍혔던 구조에 맞춰 groupPublicID를 가져옵니다.
+        if (userData && userData.groupPublicID) {
+          setGroupId(userData.groupPublicID);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user group:", error);
+      }
+    };
+    fetchUserGroup();
+  }, []);
+  useEffect(() => {
+    if (!groupId) return; // 👈 그룹 ID가 아직 없으면 요청을 보내지 않음
+
+    const fetchOccurrences = async () => {
+      try {
+        const data = await rotationApi.getOccurrences(groupId, {
+          // 👈 GROUP_ID 대신 동적 groupId 사용
+          frequency: activeTab,
+        });
+        setOccurrences(data.items || data || []);
+      } catch (error) {
+        console.error("Failed to fetch occurrences:", error);
+      }
+    };
+    fetchOccurrences();
+  }, [groupId, activeTab]);
 
   return (
     <div className="min-h-screen p-8 font-sans bg-[#F9F9F7]">
@@ -136,28 +144,36 @@ export default function RotationPage() {
 
               {expandedWeek === weekIndex && (
                 <div className="px-6 pb-6">
-                  {filteredChores.length > 0 ? (
+                  {occurrences.length > 0 ? (
                     <ul className="space-y-3">
-                      {filteredChores.map((chore) => {
-                        // 유틸 함수를 통해 당번 계산 (현재는 주석 처리되어 있으니 필요시 해제하세요)
-                        const assignee = getAssignee(chore, weekIndex);
-                        // const assignee = null; // 임시
+                      {occurrences.map((occurrence) => {
+                        // 🌟 백엔드가 계산해준 현재 담당자(currentAssignee)를 그대로 사용
+                        const assignee = occurrence.currentAssignee;
 
                         return (
                           <li
-                            key={chore.choreId}
+                            key={occurrence.occurrenceId}
                             className="flex items-center justify-between p-5 bg-[#F9F9F7] rounded-2xl"
                           >
                             <div className="flex items-center gap-4">
                               <span className="text-2xl">
-                                {chore.name.includes("쓰레기") ? "🗑️" : "🍽️"}
+                                {occurrence.choreName?.includes("쓰레기")
+                                  ? "🗑️"
+                                  : "🍽️"}
                               </span>
                               <div>
                                 <h4 className="font-bold text-gray-900">
-                                  {chore.name}
+                                  {occurrence.choreName}
                                 </h4>
                                 <p className="text-sm text-gray-500">
-                                  {chore.schedule?.dueTime || "기한 미정"}
+                                  {occurrence.dueAt
+                                    ? new Date(
+                                        occurrence.dueAt,
+                                      ).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })
+                                    : "기한 미정"}
                                 </p>
                               </div>
                             </div>
@@ -165,11 +181,7 @@ export default function RotationPage() {
                             <div className="flex items-center gap-3">
                               {assignee ? (
                                 <>
-                                  <div
-                                    className={`flex items-center justify-center w-8 h-8 text-xs font-bold text-white rounded-full ${
-                                      assignee.color || "bg-gray-400"
-                                    }`}
-                                  >
+                                  <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-gray-400 rounded-full">
                                     {assignee.displayName.charAt(0)}
                                   </div>
                                   <span className="font-bold text-gray-900">
@@ -188,7 +200,7 @@ export default function RotationPage() {
                     </ul>
                   ) : (
                     <div className="py-8 text-center text-gray-400">
-                      해당 주기에 등록된 업무가 없습니다.
+                      해당 주기에 배정된 업무가 없습니다.
                     </div>
                   )}
                 </div>

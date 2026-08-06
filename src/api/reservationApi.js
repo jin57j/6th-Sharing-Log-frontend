@@ -1,56 +1,118 @@
-// 개발 모드(MSW)일 때는 "omit"(쿠키 끔)
-// 나중에 배포/진짜 백엔드 연결 시엔 "include"(쿠키 켬)
-const CREDENTIALS_MODE = import.meta.env.DEV ? "omit" : "include";
+import { buildBackendUrl } from "./apiConfig";
 
-async function handleResponse(
-  response,
-) {
+// 백엔드 응답을 처리하는 공통 함수
+async function handleResponse(response) {
   if (response.status === 204) {
     return null;
   }
 
-  const responseBody =
-    await response.json();
+  const contentType =
+    response.headers.get("content-type") ?? "";
+
+  let responseBody = null;
+
+  if (contentType.includes("json")) {
+    try {
+      responseBody = await response.json();
+    } catch {
+      responseBody = null;
+    }
+  }
 
   if (!response.ok) {
-    throw new Error(
-      responseBody.message ||
+    const error = new Error(
+      responseBody?.detail ??
+        responseBody?.message ??
+        responseBody?.title ??
         "요청 처리에 실패했습니다.",
     );
+
+    error.status = response.status;
+    error.code = responseBody?.code;
+
+    throw error;
   }
 
   return responseBody;
 }
 
-export async function getSpaces(
-  groupId,
-) {
+// 백엔드의 시간 형식을 화면에서 사용하는 HH:mm 형식으로 변경
+function normalizeTime(time) {
+  return time?.slice(0, 5) ?? "";
+}
+
+// 백엔드 예약 응답을 기존 프론트 화면 형식으로 변경
+function normalizeReservation(reservation) {
+  const isMine =
+    reservation.member?.me === true;
+
+  return {
+    ...reservation,
+
+    memberId:
+      reservation.member?.membershipId,
+
+    memberName: isMine
+      ? "나"
+      : reservation.member?.email ?? "멤버",
+
+    mine: isMine,
+
+    startTime: normalizeTime(
+      reservation.startTime,
+    ),
+
+    endTime: normalizeTime(
+      reservation.endTime,
+    ),
+  };
+}
+
+// 공간 목록 조회
+export async function getSpaces(groupId) {
   const response = await fetch(
-    `/api/groups/${groupId}/spaces`,
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/spaces`,
+    ),
     {
-      credentials: CREDENTIALS_MODE,
+      method: "GET",
+      credentials: "include",
+
+      headers: {
+        Accept: "application/json",
+      },
     },
   );
 
   const responseBody =
     await handleResponse(response);
 
-  return responseBody.spaces;
+  // 백엔드는 spaces가 아닌 items로 반환합니다.
+  return responseBody.items;
 }
 
-export async function createSpace(
+// 새로운 공간 추가
+export async function createSpace({
   groupId,
   name,
-) {
+  csrf,
+}) {
   const response = await fetch(
-    `/api/groups/${groupId}/spaces`,
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/spaces`,
+    ),
     {
       method: "POST",
-      credentials: CREDENTIALS_MODE,
+      credentials: "include",
+
       headers: {
-        "Content-Type":
-          "application/json",
+        "Content-Type": "application/json",
+        Accept: "application/json",
+
+        // 상태 변경 요청에 필요한 CSRF 토큰
+        [csrf.headerName]: csrf.token,
       },
+
       body: JSON.stringify({
         name,
       }),
@@ -60,6 +122,7 @@ export async function createSpace(
   return handleResponse(response);
 }
 
+// 선택한 공간·날짜의 예약 목록 조회
 export async function getReservations({
   groupId,
   date,
@@ -68,55 +131,97 @@ export async function getReservations({
   const searchParams =
     new URLSearchParams({
       date,
-      spaceId: String(spaceId),
     });
 
   const response = await fetch(
-    `/api/groups/${groupId}/reservations?${searchParams}`,
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/spaces/${encodeURIComponent(spaceId)}/reservations?${searchParams}`,
+    ),
     {
-      credentials: CREDENTIALS_MODE,
+      method: "GET",
+      credentials: "include",
+
+      headers: {
+        Accept: "application/json",
+      },
     },
   );
 
   const responseBody =
     await handleResponse(response);
 
-  return responseBody.reservations;
+  // 백엔드는 reservations가 아닌 items로 반환합니다.
+  return responseBody.items.map(
+    normalizeReservation,
+  );
 }
 
-export async function createReservation(
+// 새로운 예약 생성
+export async function createReservation({
   groupId,
-  reservationData,
-) {
+  spaceId,
+  date,
+  startTime,
+  endTime,
+  csrf,
+}) {
   const response = await fetch(
-    `/api/groups/${groupId}/reservations`,
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/spaces/${encodeURIComponent(spaceId)}/reservations`,
+    ),
     {
       method: "POST",
-      credentials: CREDENTIALS_MODE,
+      credentials: "include",
+
       headers: {
-        "Content-Type":
-          "application/json",
+        "Content-Type": "application/json",
+        Accept: "application/json",
+
+        [csrf.headerName]: csrf.token,
       },
-      body: JSON.stringify(
-        reservationData,
-      ),
+
+      body: JSON.stringify({
+        date,
+        startTime,
+        endTime,
+      }),
     },
   );
 
-  return handleResponse(response);
+  const responseBody =
+    await handleResponse(response);
+
+  return normalizeReservation(responseBody);
 }
 
-export async function cancelReservation(
+// 본인의 예약 취소
+export async function cancelReservation({
   groupId,
   reservationId,
-) {
+  version,
+  csrf,
+}) {
   const response = await fetch(
-    `/api/groups/${groupId}/reservations/${reservationId}`,
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/reservations/${encodeURIComponent(reservationId)}/cancel`,
+    ),
     {
-      method: "DELETE",
-      credentials: CREDENTIALS_MODE,
+      method: "POST",
+      credentials: "include",
+
+      headers: {
+        Accept: "application/json",
+
+        [csrf.headerName]: csrf.token,
+
+        // 조회한 예약의 현재 버전을 전달합니다.
+        "If-Match": String(version),
+      },
     },
   );
 
-  return handleResponse(response);
+  const responseBody =
+    await handleResponse(response);
+
+  return normalizeReservation(responseBody);
 }
