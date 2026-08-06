@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { rotationApi } from "../../api/rotationApi"; // 🌟 API 파일 임포트
-import { getCurrentUser } from "../../api/authApi";
-
+import { rotationApi } from "../../api/rotationApi";
+import { getMyGroup } from "../../api/groupApi"; // 🌟 getCurrentUser 대신 getMyGroup 임포트
 
 // 오늘 날짜를 기준으로 동적 주차(월~일)를 계산하는 함수
 const generateWeeks = () => {
@@ -31,7 +30,7 @@ const generateWeeks = () => {
 
 export default function Rotation() {
   const [groupId, setGroupId] = useState(null);
-  const [occurrences, setOccurrences] = useState([]); // 🌟 chores -> occurrences 로 변경
+  const [occurrences, setOccurrences] = useState([]);
   const [activeTab, setActiveTab] = useState("WEEKLY");
   const [expandedWeek, setExpandedWeek] = useState(0);
   const [weeks, setWeeks] = useState([]);
@@ -40,13 +39,18 @@ export default function Rotation() {
     setWeeks(generateWeeks());
   }, []);
 
+  // 🌟 그룹 ID 세팅 (Task.jsx와 동일한 로직으로 수정)
   useEffect(() => {
     const fetchUserGroup = async () => {
       try {
-        const userData = await getCurrentUser(); // 또는 그룹 정보를 주는 API
-        // 콘솔에 찍혔던 구조에 맞춰 groupPublicID를 가져옵니다.
-        if (userData && userData.groupPublicID) {
-          setGroupId(userData.groupPublicID);
+        const response = await getMyGroup();
+        const group = response?.data || response;
+        const targetGroupId = group?.groupPublicId; // 대소문자 주의 (groupPublicId)
+
+        if (targetGroupId) {
+          setGroupId(targetGroupId);
+        } else {
+          console.error("❌ 그룹 데이터를 찾을 수 없습니다.");
         }
       } catch (error) {
         console.error("Failed to fetch user group:", error);
@@ -54,13 +58,13 @@ export default function Rotation() {
     };
     fetchUserGroup();
   }, []);
+
   useEffect(() => {
-    if (!groupId) return; // 👈 그룹 ID가 아직 없으면 요청을 보내지 않음
+    if (!groupId) return;
 
     const fetchOccurrences = async () => {
       try {
         const data = await rotationApi.getOccurrences(groupId, {
-          // 👈 GROUP_ID 대신 동적 groupId 사용
           frequency: activeTab,
         });
         setOccurrences(data.items || data || []);
@@ -147,7 +151,6 @@ export default function Rotation() {
                   {occurrences.length > 0 ? (
                     <ul className="space-y-3">
                       {occurrences.map((occurrence) => {
-                        // 🌟 백엔드가 계산해준 현재 담당자(currentAssignee)를 그대로 사용
                         const assignee = occurrence.currentAssignee;
 
                         return (
