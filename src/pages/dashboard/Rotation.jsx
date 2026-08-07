@@ -1,82 +1,36 @@
-import { useState, useEffect } from "react";
-import { rotationApi } from "../../api/rotationApi";
-import { getMyGroup } from "../../api/groupApi"; // 🌟 getCurrentUser 대신 getMyGroup 임포트
-
-// 오늘 날짜를 기준으로 동적 주차(월~일)를 계산하는 함수
-const generateWeeks = () => {
-  const today = new Date();
-  const day = today.getDay();
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-  const thisMonday = new Date(today.setDate(diff));
-
-  const weeks = [];
-  for (let i = 0; i < 3; i++) {
-    const start = new Date(thisMonday);
-    start.setDate(thisMonday.getDate() + i * 7);
-
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
-
-    const formatDate = (date) => `${date.getMonth() + 1}/${date.getDate()}`;
-
-    weeks.push({
-      label: i === 0 ? "이번 주" : `${i}주 후`,
-      dateRange: `${formatDate(start)} — ${formatDate(end)}`,
-      isCurrent: i === 0,
-    });
-  }
-  return weeks;
-};
+import useRotation from "../../hooks/useRotation";
 
 export default function Rotation() {
-  const [groupId, setGroupId] = useState(null);
-  const [occurrences, setOccurrences] = useState([]);
-  const [activeTab, setActiveTab] = useState("WEEKLY");
-  const [expandedWeek, setExpandedWeek] = useState(0);
-  const [weeks, setWeeks] = useState([]);
+  const {
+    activeTab,
+    setActiveTab,
+    expandedWeek,
+    setExpandedWeek,
+    weeks,
+    occurrences,
+  } = useRotation();
 
-  useEffect(() => {
-    setWeeks(generateWeeks());
-  }, []);
+  // 🌟 날짜+요일+시간을 예쁘게 포맷팅하는 헬퍼 함수
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "기한 미정";
+    const d = new Date(dateString);
+    const month = d.getMonth() + 1;
+    const date = d.getDate();
+    const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+    const time = d.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    return `${month}/${date}(${dayName}) ${time}`;
+  };
 
-  // 🌟 그룹 ID 세팅 (Task.jsx와 동일한 로직으로 수정)
-  useEffect(() => {
-    const fetchUserGroup = async () => {
-      try {
-        const response = await getMyGroup();
-        const group = response?.data || response;
-        const targetGroupId = group?.groupPublicId; // 대소문자 주의 (groupPublicId)
-
-        if (targetGroupId) {
-          setGroupId(targetGroupId);
-        } else {
-          console.error("❌ 그룹 데이터를 찾을 수 없습니다.");
-        }
-      } catch (error) {
-        console.error("Failed to fetch user group:", error);
-      }
-    };
-    fetchUserGroup();
-  }, []);
-
-  useEffect(() => {
-    if (!groupId) return;
-
-    const fetchOccurrences = async () => {
-      try {
-        const data = await rotationApi.getOccurrences(groupId, {
-          frequency: activeTab,
-        });
-        setOccurrences(data.items || data || []);
-      } catch (error) {
-        console.error("Failed to fetch occurrences:", error);
-      }
-    };
-    fetchOccurrences();
-  }, [groupId, activeTab]);
+  // 🌟 서버 데이터를 마감 시간(dueAt) 기준 오름차순(시간순)으로 정렬
+  const sortedOccurrences = [...(occurrences || [])].sort(
+    (a, b) => new Date(a.dueAt) - new Date(b.dueAt),
+  );
 
   return (
-    <div className="min-h-screen p-8 font-sans bg-[#F9F9F7]">
+    <div className="min-h-screen p-8 font-sans bg-[#F7F4EF]">
       <div className="max-w-4xl mx-auto">
         {/* 헤더 영역 */}
         <div className="mb-8">
@@ -148,9 +102,9 @@ export default function Rotation() {
 
               {expandedWeek === weekIndex && (
                 <div className="px-6 pb-6">
-                  {occurrences.length > 0 ? (
+                  {sortedOccurrences.length > 0 ? (
                     <ul className="space-y-3">
-                      {occurrences.map((occurrence) => {
+                      {sortedOccurrences.map((occurrence) => {
                         const assignee = occurrence.currentAssignee;
 
                         return (
@@ -168,15 +122,9 @@ export default function Rotation() {
                                 <h4 className="font-bold text-gray-900">
                                   {occurrence.choreName}
                                 </h4>
-                                <p className="text-sm text-gray-500">
-                                  {occurrence.dueAt
-                                    ? new Date(
-                                        occurrence.dueAt,
-                                      ).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                      })
-                                    : "기한 미정"}
+                                {/* 🌟 포맷팅된 날짜/시간 적용 */}
+                                <p className="text-sm text-gray-500 mt-1">
+                                  {formatDateTime(occurrence.dueAt)}
                                 </p>
                               </div>
                             </div>

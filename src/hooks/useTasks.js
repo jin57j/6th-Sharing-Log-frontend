@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { choreApi } from "../api/choreApi"; // 경로에 맞게 수정해주세요
 import { getMyGroup } from "../api/groupApi"; // 경로에 맞게 수정해주세요
 
@@ -14,11 +14,16 @@ export default function useTasks() {
     const fetchUserGroup = async () => {
       try {
         const response = await getMyGroup();
-        const group = response?.data || response;
-        const targetGroupId = group?.groupPublicId;
+        const data = response?.data || response;
+
+        // 🌟 핵심 수정: 백엔드가 내려주는 가입 하우스 목록이 배열(Array)인 경우 처리
+        const group = Array.isArray(data) ? data[0] : data;
+        const targetGroupId = group?.groupPublicId || group?.groupId;
 
         if (targetGroupId) {
           setGroupId(targetGroupId);
+        } else {
+          console.warn("⚠️ 가입된 하우스/그룹 정보가 없습니다.");
         }
       } catch (error) {
         console.error("❌ 그룹 정보를 가져오는 중 에러 발생:", error);
@@ -29,7 +34,7 @@ export default function useTasks() {
   }, []);
 
   // 2. 업무 목록 로드
-  const loadChores = async (currentGroupId) => {
+  const loadChores = useCallback(async (currentGroupId) => {
     try {
       setIsLoading(true);
       const data = await choreApi.getChores(currentGroupId);
@@ -39,13 +44,18 @@ export default function useTasks() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // 그룹 ID가 세팅되면 업무 목록을 자동으로 불러옵니다.
   useEffect(() => {
     if (!groupId) return;
-    loadChores(groupId);
-  }, [groupId]);
+
+    const fetchInitialData = async () => {
+      await loadChores(groupId);
+    };
+
+    fetchInitialData();
+  }, [groupId, loadChores]);
 
   // 3. 모달 제어 핸들러
   const openAddModal = () => {
@@ -101,6 +111,7 @@ export default function useTasks() {
 
   // 컴포넌트에서 필요한 데이터와 함수만 반환
   return {
+    groupId,
     chores,
     isModalOpen,
     editingChore,
