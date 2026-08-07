@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useOutletContext } from "react-router";
 import ChoreModal from "../../components/common/ChoreModal";
 import useTasks from "../../hooks/useTasks";
 import { useGroupMembers } from "../../hooks/useGroupMember";
@@ -21,6 +22,12 @@ const extractMemberIds = (eligibility) => {
 };
 
 export default function Task() {
+  const { activeGroup } =
+    useOutletContext();
+
+  const activeGroupId =
+    activeGroup?.groupPublicId ?? "";
+
   const {
     groupId,
     chores,
@@ -31,7 +38,7 @@ export default function Task() {
     closeModal,
     handleChoreSubmit,
     handleDelete,
-  } = useTasks();
+  } = useTasks(activeGroupId);
 
   const { members: groupMembers } = useGroupMembers(groupId);
   const [expandedChoreId, setExpandedChoreId] = useState(null);

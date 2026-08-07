@@ -1,81 +1,90 @@
-import { useState, useEffect, useCallback } from "react";
-import { choreApi } from "../api/choreApi"; // 경로에 맞게 수정해주세요
-import { getMyGroup } from "../api/groupApi"; // 경로에 맞게 수정해주세요
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
-export default function useTasks() {
-  const [groupId, setGroupId] = useState(null);
-  const [chores, setChores] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingChore, setEditingChore] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+import { choreApi } from "../api/choreApi";
 
-  // 1. 그룹 정보 로드
-  useEffect(() => {
-    const fetchUserGroup = async () => {
-      try {
-        const response = await getMyGroup();
-        const data = response?.data || response;
+export default function useTasks(groupId) {
+  const [chores, setChores] =
+    useState([]);
 
-        // 🌟 핵심 수정: 백엔드가 내려주는 가입 하우스 목록이 배열(Array)인 경우 처리
-        const group = Array.isArray(data) ? data[0] : data;
-        const targetGroupId = group?.groupPublicId || group?.groupId;
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
 
-        if (targetGroupId) {
-          setGroupId(targetGroupId);
-        } else {
-          console.warn("⚠️ 가입된 하우스/그룹 정보가 없습니다.");
-        }
-      } catch (error) {
-        console.error("❌ 그룹 정보를 가져오는 중 에러 발생:", error);
+  const [
+    editingChore,
+    setEditingChore,
+  ] = useState(null);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const loadChores = useCallback(
+    async (currentGroupId) => {
+      if (!currentGroupId) {
+        return;
       }
-    };
 
-    fetchUserGroup();
-  }, []);
+      try {
+        setIsLoading(true);
 
-  // 2. 업무 목록 로드
-  const loadChores = useCallback(async (currentGroupId) => {
-    try {
-      setIsLoading(true);
-      const data = await choreApi.getChores(currentGroupId);
-      setChores(data.items || data || []);
-    } catch (error) {
-      console.error("Failed to fetch chores:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+        const data =
+          await choreApi.getChores(
+            currentGroupId,
+          );
 
-  // 그룹 ID가 세팅되면 업무 목록을 자동으로 불러옵니다.
+        setChores(
+          data.items ?? data ?? [],
+        );
+      } catch (error) {
+        console.error(
+          "업무 목록을 불러오지 못했습니다.",
+          error,
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Layout에서 activeGroup이 준비되면
+  // 해당 하우스의 업무를 불러옵니다.
   useEffect(() => {
-    if (!groupId) return;
+    if (!groupId) {
+      return;
+    }
 
-    const fetchInitialData = async () => {
+    async function fetchInitialChores() {
       await loadChores(groupId);
-    };
+    }
 
-    fetchInitialData();
+    fetchInitialChores();
   }, [groupId, loadChores]);
 
-  // 3. 모달 제어 핸들러
-  const openAddModal = () => {
+  function openAddModal() {
     setEditingChore(null);
     setIsModalOpen(true);
-  };
+  }
 
-  const openEditModal = (chore) => {
+  function openEditModal(chore) {
     setEditingChore(chore);
     setIsModalOpen(true);
-  };
+  }
 
-  const closeModal = () => {
+  function closeModal() {
     setIsModalOpen(false);
     setEditingChore(null);
-  };
+  }
 
-  // 4. API 동작 핸들러 (생성/수정)
-  const handleChoreSubmit = async (formData) => {
-    if (!groupId) return;
+  async function handleChoreSubmit(
+    formData,
+  ) {
+    if (!groupId) {
+      return;
+    }
 
     try {
       if (editingChore) {
@@ -83,33 +92,59 @@ export default function useTasks() {
           groupId,
           editingChore.choreId,
           formData,
-          String(editingChore.version),
+          String(
+            editingChore.version,
+          ),
         );
       } else {
-        await choreApi.createChore(groupId, formData);
+        await choreApi.createChore(
+          groupId,
+          formData,
+        );
       }
 
-      await loadChores(groupId); // 목록 새로고침
+      await loadChores(groupId);
       closeModal();
     } catch (error) {
-      console.error("Failed to submit chore:", error);
+      console.error(
+        "업무를 저장하지 못했습니다.",
+        error,
+      );
     }
-  };
+  }
 
-  // 5. API 동작 핸들러 (삭제)
-  const handleDelete = async (choreId, version) => {
-    if (!groupId) return;
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+  async function handleDelete(
+    choreId,
+    version,
+  ) {
+    if (!groupId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "정말 삭제하시겠습니까?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
 
     try {
-      await choreApi.deleteChore(groupId, choreId, String(version));
-      loadChores(groupId);
-    } catch (error) {
-      console.error("Failed to delete chore:", error);
-    }
-  };
+      await choreApi.deleteChore(
+        groupId,
+        choreId,
+        String(version),
+      );
 
-  // 컴포넌트에서 필요한 데이터와 함수만 반환
+      await loadChores(groupId);
+    } catch (error) {
+      console.error(
+        "업무를 삭제하지 못했습니다.",
+        error,
+      );
+    }
+  }
+
   return {
     groupId,
     chores,

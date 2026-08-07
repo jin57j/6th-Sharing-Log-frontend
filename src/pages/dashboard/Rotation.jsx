@@ -1,6 +1,11 @@
+import { useOutletContext } from "react-router";
+
 import useRotation from "../../hooks/useRotation";
 
 export default function Rotation() {
+  const { activeGroup } =
+    useOutletContext();
+
   const {
     activeTab,
     setActiveTab,
@@ -8,7 +13,9 @@ export default function Rotation() {
     setExpandedWeek,
     weeks,
     occurrences,
-  } = useRotation();
+  } = useRotation(
+    activeGroup?.groupPublicId ?? "",
+  );
 
   // 🌟 날짜+요일+시간을 예쁘게 포맷팅하는 헬퍼 함수
   const formatDateTime = (dateString) => {

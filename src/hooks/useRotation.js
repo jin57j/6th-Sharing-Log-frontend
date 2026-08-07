@@ -1,82 +1,127 @@
-import { useState, useEffect } from "react";
-import { rotationApi } from "../api/rotationApi";
-import { getMyGroup } from "../api/groupApi";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-// 오늘 날짜를 기준으로 동적 주차(월~일)를 계산하는 함수
+import { rotationApi } from "../api/rotationApi";
+
 const generateWeeks = () => {
   const today = new Date();
   const day = today.getDay();
-  const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-  const thisMonday = new Date(today.setDate(diff));
+
+  const diff =
+    today.getDate() -
+    day +
+    (day === 0 ? -6 : 1);
+
+  const thisMonday = new Date(
+    today.setDate(diff),
+  );
 
   const weeks = [];
-  for (let i = 0; i < 3; i++) {
-    const start = new Date(thisMonday);
-    start.setDate(thisMonday.getDate() + i * 7);
+
+  for (
+    let index = 0;
+    index < 3;
+    index += 1
+  ) {
+    const start = new Date(
+      thisMonday,
+    );
+
+    start.setDate(
+      thisMonday.getDate() +
+        index * 7,
+    );
 
     const end = new Date(start);
     end.setDate(start.getDate() + 6);
 
-    const formatDate = (date) => `${date.getMonth() + 1}/${date.getDate()}`;
+    const formatDate = (date) =>
+      `${date.getMonth() + 1}/${date.getDate()}`;
 
     weeks.push({
-      label: i === 0 ? "이번 주" : `${i}주 후`,
+      label:
+        index === 0
+          ? "이번 주"
+          : `${index}주 후`,
+
       dateRange: `${formatDate(start)} — ${formatDate(end)}`,
-      isCurrent: i === 0,
+
+      isCurrent: index === 0,
     });
   }
+
   return weeks;
 };
 
-export default function useRotation() {
-  const [groupId, setGroupId] = useState(null);
-  const [occurrences, setOccurrences] = useState([]);
-  const [activeTab, setActiveTab] = useState("WEEKLY");
-  const [expandedWeek, setExpandedWeek] = useState(0);
-  const [weeks] = useState(() => generateWeeks());
+export default function useRotation(
+  groupId,
+) {
+  const [
+    occurrences,
+    setOccurrences,
+  ] = useState([]);
 
-  // 1. 그룹 정보 로드
+  const [activeTab, setActiveTab] =
+    useState("WEEKLY");
+
+  const [
+    expandedWeek,
+    setExpandedWeek,
+  ] = useState(0);
+
+  const [weeks] = useState(
+    generateWeeks,
+  );
+
+  // Layout에서 받은 현재 하우스 ID와
+  // 선택한 주차를 이용해 로테이션을 조회합니다.
   useEffect(() => {
-    const fetchUserGroup = async () => {
+    if (
+      !groupId ||
+      expandedWeek === null
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadOccurrences() {
       try {
-        const response = await getMyGroup();
-        const data = response?.data || response;
+        const data =
+          await rotationApi.getWeeklyPreview(
+            groupId,
+            {
+              frequency: activeTab,
+              weekOffset:
+                expandedWeek,
+            },
+          );
 
-        // 🌟 배열로 응답이 올 경우를 안전하게 처리
-        const group = Array.isArray(data) ? data[0] : data;
-        const targetGroupId = group?.groupPublicId || group?.groupId;
-
-        if (targetGroupId) {
-          setGroupId(targetGroupId);
-        } else {
-          console.error("❌ 그룹 데이터를 찾을 수 없습니다.");
+        if (!cancelled) {
+          setOccurrences(
+            data.items ?? data ?? [],
+          );
         }
       } catch (error) {
-        console.error("Failed to fetch user group:", error);
+        console.error(
+          "로테이션을 불러오지 못했습니다.",
+          error,
+        );
       }
-    };
-    fetchUserGroup();
-  }, []);
+    }
 
-  // 2. 업무 로테이션(Occurrence) 목록 로드
-  useEffect(() => {
-    // 🌟 expandedWeek가 null일 때(아코디언을 닫을 때)는 API 호출을 중단하여 에러를 방지합니다.
-    if (!groupId || expandedWeek === null) return;
+    loadOccurrences();
 
-    const fetchOccurrences = async () => {
-      try {
-        const data = await rotationApi.getWeeklyPreview(groupId, {
-          frequency: activeTab,
-          weekOffset: expandedWeek,
-        });
-        setOccurrences(data.items || data || []);
-      } catch (error) {
-        console.error("Failed to fetch occurrences:", error);
-      }
+    return () => {
+      cancelled = true;
     };
-    fetchOccurrences();
-  }, [groupId, activeTab, expandedWeek]);
-  // 🌟 expandedWeek가 바뀔 때도 재호출되도록 의존성 배열에 추가
+  }, [
+    groupId,
+    activeTab,
+    expandedWeek,
+  ]);
 
   return {
     activeTab,
