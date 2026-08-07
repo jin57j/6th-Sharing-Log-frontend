@@ -2,30 +2,21 @@ import { getCsrfToken } from "./authApi";
 import { buildBackendUrl } from "./apiConfig";
 
 export const memberApi = {
-  // 1. 로테이션 멤버 목록 조회 (GET)
-  // GET 요청은 데이터를 수정하지 않으므로 CSRF 토큰과 멱등성 키가 필요하지 않습니다.
-  getRotationMembers: async (groupId) => {
+  getRotationMembers: async (groupPublicId) => {
     const response = await fetch(
-      buildBackendUrl(`/api/groups/${groupId}/rotation-members`),
+      buildBackendUrl(`/api/groups/${groupPublicId}/rotation-members`),
       {
         method: "GET",
         credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
       },
     );
-
-    if (!response.ok) {
-      throw new Error(`API 요청 실패: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`API 요청 실패: ${response.status}`);
     return response.json();
   },
 
-  // 2. 멤버의 할 일 참여/제외 설정 (PATCH)
   updateChoreParticipations: async (
-    groupId,
+    groupPublicId,
     membershipId,
     addChoreIds = [],
     removeChoreIds = [],
@@ -35,7 +26,7 @@ export const memberApi = {
 
     const response = await fetch(
       buildBackendUrl(
-        `/api/groups/${groupId}/rotation-members/${membershipId}/chore-participations`,
+        `/api/groups/${groupPublicId}/rotation-members/${membershipId}/chore-participations`,
       ),
       {
         method: "PATCH",
@@ -43,8 +34,8 @@ export const memberApi = {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "Idempotency-Key": idempotencyKey, // 👈 필수 헤더
-          [csrf.headerName]: csrf.token, // 👈 CSRF 토큰 주입
+          "Idempotency-Key": idempotencyKey,
+          [csrf.headerName]: csrf.token,
         },
         body: JSON.stringify({
           addChoreIds,
@@ -53,7 +44,6 @@ export const memberApi = {
         }),
       },
     );
-
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       throw new Error(
@@ -62,28 +52,29 @@ export const memberApi = {
           `API 요청 실패: ${response.status}`,
       );
     }
-
     return response.status === 204 ? null : response.json();
   },
 
-  // 3. 멤버 그룹 탈퇴/나가기 (POST)
-  leaveGroup: async (groupId, membershipId) => {
+  // 🌟 탈퇴(leave) 시 멤버 정보의 version을 받아 If-Match로 전달하도록 수정
+  leaveGroup: async (groupPublicId, membershipId, version) => {
     const csrf = await getCsrfToken();
     const idempotencyKey = crypto.randomUUID();
 
     const response = await fetch(
-      buildBackendUrl(`/api/groups/${groupId}/members/${membershipId}/leave`),
+      buildBackendUrl(
+        `/api/groups/${groupPublicId}/members/${membershipId}/leave`,
+      ),
       {
         method: "POST",
         credentials: "include",
         headers: {
           Accept: "application/json",
-          "Idempotency-Key": idempotencyKey, // 👈 필수 헤더
-          [csrf.headerName]: csrf.token, // 👈 CSRF 토큰 주입
+          "Idempotency-Key": idempotencyKey,
+          "If-Match": `"${version}"`, // 👈 필수 헤더 추가
+          [csrf.headerName]: csrf.token,
         },
       },
     );
-
     if (!response.ok) {
       const errorBody = await response.json().catch(() => ({}));
       throw new Error(
@@ -92,7 +83,6 @@ export const memberApi = {
           `API 요청 실패: ${response.status}`,
       );
     }
-
     return response.status === 204 ? null : response.json();
   },
 };
