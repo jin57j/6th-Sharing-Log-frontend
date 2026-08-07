@@ -179,3 +179,39 @@ export async function deleteGroup({
   // response.json()을 실행하지 않습니다.
   return null;
 }
+
+// 하우스 이름과 주소를 수정합니다.
+export async function updateGroup({
+  groupPublicId,
+  name,
+  address,
+  csrf,
+}) {
+  const response = await fetch(
+    buildBackendUrl(
+      `/api/groups/${groupPublicId}`,
+    ),
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+      body: JSON.stringify({
+        name,
+        address,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    throw await createGroupApiError(
+      response,
+      "하우스 정보를 수정하지 못했습니다.",
+    );
+  }
+
+  return response.json();
+}
