@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 
 import { getCurrentUser } from "../api/authApi";
-import { getMyGroup } from "../api/groupApi";
+import { getMyGroups } from "../api/groupApi";
+import {
+  resolveActiveGroup,
+  saveActiveGroupId,
+} from "../utils/activeGroup";
 
 export default function useCurrentProfile() {
-  // API에서 받은 사용자 전체 정보를 저장합니다.
-  const [user, setUser] = useState(null);
+  const [user, setUser] =
+    useState(null);
 
-  // API에서 받은 하우스 전체 정보를 저장합니다.
-  const [group, setGroup] = useState(null);
+  // 사용자가 가입한 전체 하우스 목록입니다.
+  const [groups, setGroups] =
+    useState([]);
+
+  // 현재 화면에서 사용 중인 하우스입니다.
+  const [activeGroup, setActiveGroup] =
+    useState(null);
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -21,19 +30,26 @@ export default function useCurrentProfile() {
 
     async function loadCurrentProfile() {
       try {
-        // 사용자 정보와 하우스 정보를 동시에 요청합니다.
-        const [currentUser, currentGroup] =
-          await Promise.all([
-            getCurrentUser(),
-            getMyGroup(),
-          ]);
+        const [
+          currentUser,
+          currentGroups,
+        ] = await Promise.all([
+          getCurrentUser(),
+          getMyGroups(),
+        ]);
 
         if (cancelled) {
           return;
         }
 
         setUser(currentUser);
-        setGroup(currentGroup);
+        setGroups(currentGroups);
+
+        setActiveGroup(
+          resolveActiveGroup(
+            currentGroups,
+          ),
+        );
       } catch (error) {
         if (cancelled) {
           return;
@@ -57,24 +73,42 @@ export default function useCurrentProfile() {
     };
   }, []);
 
-  // 사이드바와 홈에서 편하게 사용할 값입니다.
   const nickname =
     user?.nickname?.trim() || "사용자";
 
   const houseName =
-    group?.groupName || "참여 중인 하우스 없음";
+    activeGroup?.groupName ||
+    "선택된 하우스 없음";
 
-  // 닉네임 수정 API의 응답으로 공통 사용자 정보를 갱신합니다.
   function updateCurrentUser(updatedUser) {
     setUser(updatedUser);
   }
 
-  return {
-    // 계정 페이지에서 사용하는 전체 정보
-    user,
-    group,
+  function selectActiveGroup(group) {
+    if (!group?.groupPublicId) {
+      return;
+    }
 
-    // 사이드바와 홈에서 사용하는 간단한 정보
+    saveActiveGroupId(
+      group.groupPublicId,
+    );
+
+    setActiveGroup(group);
+  }
+
+  return {
+    user,
+
+    // 전체 하우스 목록
+    groups,
+
+    // 새 코드에서 사용할 현재 하우스 이름
+    activeGroup,
+
+    // 기존 Layout·예약·계정 코드와의 호환을 위해 유지합니다.
+    // group도 activeGroup과 같은 값을 가리킵니다.
+    group: activeGroup,
+
     nickname,
     houseName,
 
@@ -82,5 +116,6 @@ export default function useCurrentProfile() {
     errorMessage,
 
     updateCurrentUser,
+    selectActiveGroup,
   };
 }

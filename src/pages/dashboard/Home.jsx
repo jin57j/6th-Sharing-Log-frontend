@@ -12,11 +12,17 @@ function Home() {
   const navigate = useNavigate();
 
   // Layout이 전달한 사용자 정보를 받습니다.
-  const { profile } = useOutletContext();
+  const {
+    profile,
+    activeGroup,
+  } = useOutletContext();
 
   const { nickname, isLoading: isProfileLoading } = profile;
 
-  const { chores: tasks } = useTasks();
+  const { chores: tasks } = useTasks(
+    activeGroup?.groupPublicId ?? "",
+  );
+
   const handleCompleteTask = () => {
     console.log("홈 화면 완료 기능은 API 연동 필요");
   };

@@ -3,8 +3,8 @@ import { useNavigate } from "react-router";
 
 import { getCsrfToken } from "../api/authApi";
 import { leaveGroup } from "../api/groupApi";
+import { clearActiveGroupId } from "../utils/activeGroup";
 
-// Layout에서 이미 조회한 하우스 정보를 전달받습니다.
 export default function useLeaveHouse(house) {
   const navigate = useNavigate();
 
@@ -15,7 +15,6 @@ export default function useLeaveHouse(house) {
     useState("");
 
   async function handleLeaveHouse() {
-    // 하우스 정보가 없거나 이미 탈퇴 요청 중이면 실행하지 않습니다.
     if (!house || isLeaving) {
       return;
     }
@@ -32,12 +31,11 @@ export default function useLeaveHouse(house) {
     setIsLeaving(true);
 
     try {
-      // 상태 변경 요청에 필요한 CSRF 토큰을 받습니다.
       const csrf = await getCsrfToken();
 
-      // 하우스 탈퇴 API를 요청합니다.
       await leaveGroup({
-        groupPublicId: house.groupPublicId,
+        groupPublicId:
+          house.groupPublicId,
         membershipPublicId:
           house.membershipPublicId,
         membershipVersion:
@@ -45,12 +43,14 @@ export default function useLeaveHouse(house) {
         csrf,
       });
 
-      // 사용자 계정은 유지되므로 하우스 선택 화면으로 이동합니다.
+      // 탈퇴한 하우스가 현재 하우스로 남지 않게 제거합니다.
+      clearActiveGroupId();
+
+      // 남은 하우스를 다시 선택할 수 있도록 이동합니다.
       navigate("/house-choice", {
         replace: true,
       });
     } catch (error) {
-      // 로그인 세션이 만료된 경우
       if (error.status === 401) {
         navigate("/", {
           replace: true,
@@ -59,20 +59,21 @@ export default function useLeaveHouse(house) {
         return;
       }
 
-      // 마지막 오너가 탈퇴하려는 경우
       if (
         error.code ===
         "LAST_OWNER_CANNOT_LEAVE"
       ) {
         setErrorMessage(
-          "마지막 소유자는 하우스를 탈퇴할 수 없어요. 다른 멤버에게 소유자 권한을 넘긴 후 다시 시도해 주세요.",
+          "다른 멤버가 남아 있는 마지막 소유자는 탈퇴할 수 없어요. 다른 소유자를 지정한 후 다시 시도해 주세요.",
         );
 
         return;
       }
 
-      // 조회한 이후 멤버십 버전이 변경된 경우
-      if (error.code === "VERSION_CONFLICT") {
+      if (
+        error.code ===
+        "VERSION_CONFLICT"
+      ) {
         setErrorMessage(
           "하우스 정보가 변경되었어요. 페이지를 새로고침한 뒤 다시 시도해 주세요.",
         );

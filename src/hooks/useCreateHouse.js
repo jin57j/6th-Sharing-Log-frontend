@@ -4,43 +4,52 @@ import { useNavigate } from "react-router";
 import { getCsrfToken } from "../api/authApi";
 import { createGroup } from "../api/groupApi";
 import { createInvitation } from "../api/invitationApi";
+import { saveActiveGroupId } from "../utils/activeGroup";
 
 export default function useCreateHouse() {
   const navigate = useNavigate();
 
-  const [houseName, setHouseName] = useState("");
-  const [address, setAddress] = useState("");
+  const [houseName, setHouseName] =
+    useState("");
+
+  const [address, setAddress] =
+    useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
 
-    // 1. 서버에서 CSRF 보안 토큰을 가져옵니다.
     const csrf = await getCsrfToken();
 
-    // 2. 사용자가 입력한 이름으로 하우스를 생성합니다.
+    // 새로운 하우스를 생성합니다.
     const group = await createGroup({
       name: houseName.trim(),
-
-      // 입력하지 않았다면 null, 입력했다면 공백을 제거하여 전달
       address: address.trim() || null,
-
-      csrf,
-   });
-
-    // 3. 생성된 하우스의 초대 코드를 발급합니다.
-    const invitation = await createInvitation({
-      groupId: group.groupId,
       csrf,
     });
 
-    // 4. 초대 코드 화면으로 이동합니다.
+    // 방금 생성한 하우스를 현재 하우스로 저장합니다.
+    saveActiveGroupId(
+      group.groupPublicId,
+    );
+
+    // 생성된 하우스의 초대 코드를 발급합니다.
+    const invitation =
+      await createInvitation({
+        groupId: group.groupId,
+        csrf,
+      });
+
     navigate("/invite-house", {
       state: {
         houseName: group.name,
         groupId: group.groupId,
+        groupPublicId:
+          group.groupPublicId,
         inviteCode: invitation.code,
-        inviteUrl: invitation.inviteUrl,
-        expiresAt: invitation.expiresAt,
+        inviteUrl:
+          invitation.inviteUrl,
+        expiresAt:
+          invitation.expiresAt,
       },
     });
   }

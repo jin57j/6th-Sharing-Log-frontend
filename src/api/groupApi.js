@@ -1,33 +1,37 @@
 import { buildBackendUrl } from "./apiConfig";
 
-// 백엔드가 전달한 오류 메시지를 읽는 함수
-async function getErrorMessage(response) {
+// 백엔드가 전달한 오류 메시지를 읽습니다.
+async function getErrorMessage(
+  response,
+  fallbackMessage,
+) {
   const contentType =
     response.headers.get("content-type") ?? "";
 
-  if (contentType.includes("application/json")) {
-    const body = await response.json();
+  if (contentType.includes("json")) {
+    try {
+      const body = await response.json();
 
-    return (
-      body.detail ??
-      body.message ??
-      body.error ??
-      "하우스 생성에 실패했습니다."
-    );
+      return (
+        body.detail ??
+        body.title ??
+        body.message ??
+        body.error ??
+        fallbackMessage
+      );
+    } catch {
+      return fallbackMessage;
+    }
   }
 
   if (response.status === 401) {
     return "로그인이 필요합니다. 다시 로그인해 주세요.";
   }
 
-  if (response.status === 409) {
-    return "이미 참여 중인 하우스가 있습니다.";
-  }
-
-  return "하우스 생성에 실패했습니다.";
+  return fallbackMessage;
 }
 
-// 새로운 하우스를 생성하는 함수
+// 새로운 하우스를 생성합니다.
 export async function createGroup({
   name,
   address,
@@ -37,15 +41,11 @@ export async function createGroup({
     buildBackendUrl("/api/groups"),
     {
       method: "POST",
-
-      // 로그인 세션 쿠키를 백엔드로 보냅니다.
       credentials: "include",
 
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-
-        // Spring Security의 CSRF 검사를 통과하기 위한 헤더
         [csrf.headerName]: csrf.token,
       },
 
@@ -57,20 +57,26 @@ export async function createGroup({
   );
 
   if (!response.ok) {
-    throw new Error(await getErrorMessage(response));
+    throw new Error(
+      await getErrorMessage(
+        response,
+        "하우스를 생성하지 못했습니다.",
+      ),
+    );
   }
 
   return response.json();
 }
 
-// 현재 로그인한 사용자의 활성 하우스를 조회하는 함수
-export async function getMyGroup() {
+// 현재 로그인한 사용자가 가입한 모든 하우스를 조회합니다.
+//
+// 하우스가 없으면 null이나 404가 아니라
+// 빈 배열 []을 반환합니다.
+export async function getMyGroups() {
   const response = await fetch(
     buildBackendUrl("/api/groups/me"),
     {
       method: "GET",
-
-      // 로그인 세션 쿠키를 함께 보냅니다.
       credentials: "include",
 
       headers: {
@@ -79,35 +85,39 @@ export async function getMyGroup() {
     },
   );
 
-  // 현재 백엔드는 가입한 하우스가 없을 때 404를 반환합니다.
-  if (response.status === 404) {
-    return null;
-  }
-
   if (response.status === 401) {
     const error = new Error(
       "로그인이 필요합니다.",
     );
 
     error.status = response.status;
-
     throw error;
   }
 
   if (!response.ok) {
     const error = new Error(
-      "하우스 정보를 불러오지 못했습니다.",
+      await getErrorMessage(
+        response,
+        "하우스 목록을 불러오지 못했습니다.",
+      ),
     );
 
     error.status = response.status;
-
     throw error;
   }
 
-  return response.json();
+  const groups = await response.json();
+
+  if (!Array.isArray(groups)) {
+    throw new Error(
+      "하우스 목록의 응답 형식이 올바르지 않습니다.",
+    );
+  }
+
+  return groups;
 }
 
-// 하우스 탈퇴 API에서 전달한 오류를 읽는 함수
+// 하우스 탈퇴 API 오류 객체를 만듭니다.
 async function createGroupApiError(
   response,
   fallbackMessage,
@@ -117,7 +127,6 @@ async function createGroupApiError(
 
   let body = null;
 
-  // application/json과 application/problem+json을 모두 처리합니다.
   if (contentType.includes("json")) {
     try {
       body = await response.json();
@@ -129,6 +138,7 @@ async function createGroupApiError(
   const error = new Error(
     body?.detail ??
       body?.title ??
+      body?.message ??
       fallbackMessage,
   );
 
@@ -138,16 +148,15 @@ async function createGroupApiError(
   return error;
 }
 
-// 현재 로그인한 사용자가 자신의 하우스에서 탈퇴하는 함수
+// 현재 로그인한 사용자가 하우스에서 탈퇴합니다.
 export async function leaveGroup({
   groupPublicId,
   membershipPublicId,
   membershipVersion,
   csrf,
 }) {
-  // 이번 탈퇴 요청을 식별할 고유한 문자열을 생성합니다.
-  // 동일한 요청이 중복 처리되는 것을 방지하기 위해 사용합니다.
-  const idempotencyKey = crypto.randomUUID();
+  const idempotencyKey =
+    crypto.randomUUID();
 
   const response = await fetch(
     buildBackendUrl(
@@ -155,21 +164,13 @@ export async function leaveGroup({
     ),
     {
       method: "POST",
-
-      // 로그인 세션 쿠키를 함께 보냅니다.
       credentials: "include",
 
       headers: {
         Accept: "application/json",
-
-        // Spring Security의 CSRF 검사를 통과하기 위한 헤더
         [csrf.headerName]: csrf.token,
-
-        // 동일한 탈퇴 요청이 중복 실행되는 것을 방지합니다.
-        "Idempotency-Key": idempotencyKey,
-
-        // 현재 멤버십 버전을 큰따옴표로 감싸 전달합니다.
-        // 예: membershipVersion이 0이면 If-Match의 값은 "0"
+        "Idempotency-Key":
+          idempotencyKey,
         "If-Match": `"${membershipVersion}"`,
       },
     },
@@ -180,6 +181,10 @@ export async function leaveGroup({
       response,
       "하우스에서 탈퇴하지 못했습니다.",
     );
+  }
+
+  if (response.status === 204) {
+    return null;
   }
 
   return response.json();
