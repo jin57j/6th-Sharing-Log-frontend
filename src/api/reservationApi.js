@@ -77,7 +77,6 @@ export async function getSpaces(groupId) {
     {
       method: "GET",
       credentials: "include",
-
       headers: {
         Accept: "application/json",
       },
@@ -104,7 +103,6 @@ export async function createSpace({
     {
       method: "POST",
       credentials: "include",
-
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
@@ -112,13 +110,38 @@ export async function createSpace({
         // 상태 변경 요청에 필요한 CSRF 토큰
         [csrf.headerName]: csrf.token,
       },
-
       body: JSON.stringify({
         name,
       }),
     },
   );
 
+  return handleResponse(response);
+}
+
+// 예약 공간 삭제
+export async function deleteSpace({
+  groupId,
+  spaceId,
+  csrf,
+}) {
+  const response = await fetch(
+    buildBackendUrl(
+      `/api/groups/${encodeURIComponent(groupId)}/spaces/${encodeURIComponent(spaceId)}`,
+    ),
+    {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+
+        // 상태 변경 요청에 필요한 CSRF 토큰
+        [csrf.headerName]: csrf.token,
+      },
+    },
+  );
+
+  // 성공하면 백엔드가 204 No Content를 반환합니다.
   return handleResponse(response);
 }
 
@@ -140,7 +163,6 @@ export async function getReservations({
     {
       method: "GET",
       credentials: "include",
-
       headers: {
         Accept: "application/json",
       },
@@ -172,14 +194,11 @@ export async function createReservation({
     {
       method: "POST",
       credentials: "include",
-
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-
         [csrf.headerName]: csrf.token,
       },
-
       body: JSON.stringify({
         date,
         startTime,
@@ -208,10 +227,8 @@ export async function cancelReservation({
     {
       method: "POST",
       credentials: "include",
-
       headers: {
         Accept: "application/json",
-
         [csrf.headerName]: csrf.token,
 
         // 조회한 예약의 현재 버전을 전달합니다.

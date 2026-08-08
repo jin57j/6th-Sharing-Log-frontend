@@ -1,100 +1,95 @@
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useOutletContext } from "react-router";
 import ChoreModal from "../../components/common/ChoreModal";
-import { choreApi } from "../../api/choreApi";
-import { getCurrentUser } from "../../api/authApi"; 
-import { getMyGroup } from "../../api/groupApi";
+import useTasks from "../../hooks/useTasks";
+import { useGroupMembers } from "../../hooks/useGroupMember";
+import { rotationApi } from "../../api/rotationApi";
+
+const extractMemberIds = (eligibility) => {
+  if (!eligibility) return [];
+  if (
+    Array.isArray(eligibility.membershipIds) &&
+    eligibility.membershipIds.length > 0
+  ) {
+    return eligibility.membershipIds;
+  }
+  if (Array.isArray(eligibility.members)) {
+    return eligibility.members.map((m) =>
+      typeof m === "object" ? m.membershipId : m,
+    );
+  }
+  return [];
+};
 
 export default function Task() {
-  const [groupId, setGroupId] = useState(null); 
-  const [chores, setChores] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingChore, setEditingChore] = useState(null);
+  const { activeGroup } =
+    useOutletContext();
 
-  useEffect(() => {
-    const fetchUserGroup = async () => {
-      try {
-        console.log("그룹 정보 요청 시작...");
-        const response = await getMyGroup();
-        console.log("서버에서 받은 그룹 응답 전체:", response);
+  const activeGroupId =
+    activeGroup?.groupPublicId ?? "";
 
-        const group = response?.data || response;
-        const targetGroupId = group?.groupPublicId;
+  const {
+    groupId,
+    chores,
+    isModalOpen,
+    editingChore,
+    openAddModal,
+    openEditModal,
+    closeModal,
+    handleChoreSubmit,
+    handleDelete,
+  } = useTasks(activeGroupId);
 
-        if (targetGroupId) {
-          setGroupId(targetGroupId);
-          console.log("✅ 그룹 ID 세팅 성공:", targetGroupId);
-        } else {
-          console.error("❌ 그룹 데이터 안에 groupPublicID가 없습니다:", group);
-        }
-      } catch (error) {
-        console.error("❌ 그룹 정보를 가져오는 중 에러 발생:", error);
-      }
-    };
+  const { members: groupMembers } = useGroupMembers(groupId);
+  const [expandedChoreId, setExpandedChoreId] = useState(null);
+  const [rotationMap, setRotationMap] = useState({});
 
-    fetchUserGroup();
-  }, []);
+  const toggleRotation = async (chore) => {
+    const choreId = typeof chore === "object" ? chore.choreId : chore;
 
-  const loadChores = async (currentGroupId) => {
-    try {
-      const data = await choreApi.getChores(currentGroupId);
-      setChores(data.items || data || []);
-    } catch (error) {
-      console.error("Failed to fetch chores:", error);
+    if (expandedChoreId === choreId) {
+      setExpandedChoreId(null);
+      return;
     }
-  };
 
-  useEffect(() => {
-    if (!groupId) return; 
-    loadChores(groupId);
-  }, [groupId]);
-
-  const openAddModal = () => {
-    setEditingChore(null);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (chore) => {
-    setEditingChore(chore);
-    setIsModalOpen(true);
-  };
-
-  // 🌟 3. 폼 제출 핸들러 (수정 시 version 전달 추가)
-  const handleChoreSubmit = async (formData) => {
-    if (!groupId) return;
+    setExpandedChoreId(choreId);
+    if (rotationMap[choreId]) return;
 
     try {
-      if (editingChore) {
-        // [수정] - API에 4번째 인자로 버전을 문자열로 전달합니다!
-        await choreApi.updateChore(
-          groupId, 
-          editingChore.choreId, 
-          formData, 
-          String(editingChore.version) // 👈 기존 데이터의 version 전달
-        );
-      } else {
-        // [생성]
-        await choreApi.createChore(groupId, formData);
-      }
+      const offsets = [0, 1, 2, 3];
+      const previewPromises = offsets.map((offset) =>
+        // 서버에 요청 (서버가 choreId를 무시하더라도 일단 보냄)
+        rotationApi.getWeeklyPreview(groupId, { choreId, weekOffset: offset }),
+      );
 
-      await loadChores(groupId); 
-      setIsModalOpen(false);
+      const responses = await Promise.all(previewPromises);
+
+      // 1. 모든 응답 데이터를 하나로 합칩니다.
+      const allOccurrences = responses.flatMap((res) => res.items || []);
+
+      // 🌟 [핵심 수정] 2. 섞여 있는 전체 일정 중, '지금 누른 업무(choreId)'만 깐깐하게 걸러냅니다!
+      const targetOccurrences = allOccurrences.filter(
+        (item) => item.choreId === choreId,
+      );
+
+      // 3. 걸러낸 일정에서 담당자 이름만 추출합니다.
+      const names = targetOccurrences
+        .filter((item) => item.currentAssignee)
+        .map((item) => item.currentAssignee.displayName);
+
+      const displayNames = names.slice(0, 5);
+
+      setRotationMap((prev) => ({
+        ...prev,
+        [choreId]:
+          displayNames.length > 0 ? displayNames : ["예정된 당번이 없습니다."],
+      }));
     } catch (error) {
-      console.error("Failed to submit chore:", error);
-    }
-  };
-
-  // 🌟 4. 삭제 핸들러 (version 파라미터 추가)
-  const handleDelete = async (choreId, version) => { // 👈 version 파라미터 추가
-    if (!groupId) return;
-    if (!window.confirm("정말 삭제하시겠습니까?")) return;
-
-    try {
-      // API에 3번째 인자로 버전을 문자열로 전달합니다!
-      await choreApi.deleteChore(groupId, choreId, String(version)); // 👈 version 전달
-      loadChores(groupId); 
-    } catch (error) {
-      console.error("Failed to delete chore:", error);
+      console.error("미래 로테이션 조회 실패", error);
+      setRotationMap((prev) => ({
+        ...prev,
+        [choreId]: ["미래 로테이션 정보를 불러오지 못했습니다."],
+      }));
     }
   };
 
@@ -118,59 +113,85 @@ export default function Task() {
       <div className="max-w-4xl mx-auto bg-white border border-gray-200 shadow-sm rounded-2xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <span className="text-sm font-bold text-gray-500">업무</span>
-          <div className="flex gap-4 text-sm font-bold text-gray-500">
-            <span>반복</span>
-            <span>관리</span>
-          </div>
+          <div className="flex gap-4 text-sm font-bold text-gray-500"></div>
         </div>
 
         {chores.length > 0 ? (
           <ul>
-            {chores.map((chore) => (
-              <li
-                key={chore.choreId}
-                className="flex items-center justify-between px-6 py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-2xl">🧹</span>
-                  <div>
-                    <h3 className="font-bold text-gray-900">{chore.name}</h3>
-                    <p className="text-xs text-gray-400">
-                      마감 정보 연동 필요 · 로테이션 4명
-                    </p>
+            {chores.map((chore) => {
+              const memberIds = extractMemberIds(chore.eligibility);
+              const memberCountText =
+                chore.eligibility?.mode === "ALL_ACTIVE_MEMBERS"
+                  ? `${Array.isArray(groupMembers) ? groupMembers.length : groupMembers?.items?.length || 0}명`
+                  : `${memberIds.length}명`;
+
+              const dueTimeText = chore.schedule?.dueTime
+                ? chore.schedule.dueTime.slice(0, 5)
+                : "미정";
+
+              return (
+                <li
+                  key={chore.choreId}
+                  className="flex flex-col px-6 py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <span className="text-2xl">🧹</span>
+                      <div>
+                        <h3 className="font-bold text-gray-900">
+                          {chore.name}
+                        </h3>
+                        <p className="text-xs text-gray-400">
+                          마감: {dueTimeText} · 로테이션 {memberCountText}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="px-3 py-1 text-xs font-bold text-gray-600 bg-gray-100 rounded-full">
+                        {chore.schedule?.frequency === "DAILY"
+                          ? "매일"
+                          : chore.schedule?.frequency === "WEEKLY"
+                            ? "매주"
+                            : "격주"}
+                      </span>
+                      <button
+                        onClick={() => toggleRotation(chore)}
+                        className={`p-2 transition-colors ${expandedChoreId === chore.choreId ? "text-blue-500" : "text-gray-400 hover:text-blue-500"}`}
+                      >
+                        🔍
+                      </button>
+                      <button
+                        onClick={() => openEditModal(chore)}
+                        className="p-2 text-gray-400 transition-colors hover:text-gray-600"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDelete(chore.choreId, chore.version)
+                        }
+                        className="p-2 text-gray-400 transition-colors hover:text-red-500"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 text-xs font-bold text-gray-600 bg-gray-100 rounded-full">
-                    {chore.schedule?.frequency === "DAILY"
-                      ? "매일"
-                      : chore.schedule?.frequency === "WEEKLY"
-                        ? "매주"
-                        : "격주"}
-                  </span>
-
-                  <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-red-400 rounded-full">
-                    김
-                  </div>
-
-                  <button
-                    onClick={() => openEditModal(chore)}
-                    className="p-2 text-gray-400 transition-colors hover:text-gray-600"
-                  >
-                    ✏️
-                  </button>
-
-                  <button
-                    // 🌟 클릭 시 choreId와 함께 version 데이터도 같이 넘겨줍니다!
-                    onClick={() => handleDelete(chore.choreId, chore.version)} 
-                    className="p-2 text-gray-400 transition-colors hover:text-red-500"
-                  >
-                    🗑️
-                  </button>
-                </div>
-              </li>
-            ))}
+                  {expandedChoreId === chore.choreId && (
+                    <div className="p-4 mt-4 bg-[#FDF8E7] rounded-xl text-sm text-gray-700 animate-fade-in">
+                      <span className="mr-2 font-bold text-gray-900">
+                        🔄 로테이션 순서:
+                      </span>
+                      <span className="font-medium text-blue-600">
+                        {rotationMap[chore.choreId]
+                          ? rotationMap[chore.choreId].join(" → ")
+                          : "불러오는 중..."}
+                      </span>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="py-16 text-center text-gray-400">
@@ -183,9 +204,10 @@ export default function Task() {
         <ChoreModal
           key={editingChore ? editingChore.choreId : "new-chore"}
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={closeModal}
           initialData={editingChore}
           onSubmit={handleChoreSubmit}
+          groupId={groupId}
         />
       )}
     </div>

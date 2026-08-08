@@ -1,38 +1,160 @@
-import { useState } from "react";
-import { mockMyTasks } from "../mocks/homeData";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 
-export default function useTasks() {
-  const [tasks, setTasks] = useState(() => {
-    const savedTasks = JSON.parse(localStorage.getItem("activeTasks"));
-    if (savedTasks && savedTasks.length > 0) {
-      return savedTasks;
+import { choreApi } from "../api/choreApi";
+
+export default function useTasks(groupId) {
+  const [chores, setChores] =
+    useState([]);
+
+  const [isModalOpen, setIsModalOpen] =
+    useState(false);
+
+  const [
+    editingChore,
+    setEditingChore,
+  ] = useState(null);
+
+  const [isLoading, setIsLoading] =
+    useState(false);
+
+  const loadChores = useCallback(
+    async (currentGroupId) => {
+      if (!currentGroupId) {
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+
+        const data =
+          await choreApi.getChores(
+            currentGroupId,
+          );
+
+        setChores(
+          data.items ?? data ?? [],
+        );
+      } catch (error) {
+        console.error(
+          "업무 목록을 불러오지 못했습니다.",
+          error,
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
+
+  // Layout에서 activeGroup이 준비되면
+  // 해당 하우스의 업무를 불러옵니다.
+  useEffect(() => {
+    if (!groupId) {
+      return;
     }
-    return mockMyTasks;
-  });
 
-  const handleCompleteTask = (taskToComplete) => {
-    // 현재 진행 중인 목록에서 해당 업무 제거
-    const updatedTasks = tasks.filter((task) => task.id !== taskToComplete.id);
-    setTasks(updatedTasks);
-    localStorage.setItem("activeTasks", JSON.stringify(updatedTasks));
+    async function fetchInitialChores() {
+      await loadChores(groupId);
+    }
 
-    const existingCompleted =
-      JSON.parse(localStorage.getItem("completedTasks")) || [];
+    fetchInitialChores();
+  }, [groupId, loadChores]);
 
-    // 이미 완료 목록에 똑같은 업무(id)가 있는지 검사
-    const isDuplicate = existingCompleted.some(
-      (task) => task.id === taskToComplete.id
+  function openAddModal() {
+    setEditingChore(null);
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(chore) {
+    setEditingChore(chore);
+    setIsModalOpen(true);
+  }
+
+  function closeModal() {
+    setIsModalOpen(false);
+    setEditingChore(null);
+  }
+
+  async function handleChoreSubmit(
+    formData,
+  ) {
+    if (!groupId) {
+      return;
+    }
+
+    try {
+      if (editingChore) {
+        await choreApi.updateChore(
+          groupId,
+          editingChore.choreId,
+          formData,
+          String(
+            editingChore.version,
+          ),
+        );
+      } else {
+        await choreApi.createChore(
+          groupId,
+          formData,
+        );
+      }
+
+      await loadChores(groupId);
+      closeModal();
+    } catch (error) {
+      console.error(
+        "업무를 저장하지 못했습니다.",
+        error,
+      );
+    }
+  }
+
+  async function handleDelete(
+    choreId,
+    version,
+  ) {
+    if (!groupId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "정말 삭제하시겠습니까?",
     );
 
-    // 중복이 아닐 때만 추가
-    if (!isDuplicate) {
-      const updatedCompleted = [...existingCompleted, taskToComplete];
-      localStorage.setItem("completedTasks", JSON.stringify(updatedCompleted));
+    if (!confirmed) {
+      return;
     }
-  };
+
+    try {
+      await choreApi.deleteChore(
+        groupId,
+        choreId,
+        String(version),
+      );
+
+      await loadChores(groupId);
+    } catch (error) {
+      console.error(
+        "업무를 삭제하지 못했습니다.",
+        error,
+      );
+    }
+  }
 
   return {
-    tasks,
-    handleCompleteTask,
+    groupId,
+    chores,
+    isModalOpen,
+    editingChore,
+    isLoading,
+    openAddModal,
+    openEditModal,
+    closeModal,
+    handleChoreSubmit,
+    handleDelete,
   };
 }
