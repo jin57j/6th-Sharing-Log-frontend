@@ -1,7 +1,55 @@
 import { LuClock, LuHandshake, LuCheck } from "react-icons/lu";
 
+//마감 시간 계산 헬퍼 함수
+const calculateTimeInfo = (dueAt) => {
+  if (!dueAt) return { timeLeft: "기한 미정", isUrgent: false };
+
+  const now = new Date();
+  const due = new Date(dueAt);
+  const diffMs = due - now;
+
+  if (diffMs < 0) return { timeLeft: "마감 지남", isUrgent: true };
+
+  // 남은 시간을 각각 일, 시간, 분 단위로 계산합니다.
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) {
+    return { timeLeft: `${diffDays}일 남음`, isUrgent: false };
+  } else if (diffHours > 0) {
+    return { timeLeft: `${diffHours}시간 남음`, isUrgent: true };
+  } else {
+    return {
+      timeLeft: diffMinutes > 0 ? `${diffMinutes}분 남음` : "1분 미만",
+      isUrgent: true,
+    };
+  }
+};
+
+// 업무 이름에 따른 자동 아이콘 매핑
+const getChoreIcon = (choreName = "") => {
+  if (choreName.includes("쓰레기") || choreName.includes("분리수거"))
+    return "🗑️";
+  if (choreName.includes("주방") || choreName.includes("설거지")) return "🍽️";
+  if (choreName.includes("화장실") || choreName.includes("청소")) return "🚽";
+  if (choreName.includes("빨래") || choreName.includes("세탁")) return "🧺";
+  return "📝";
+};
+
 function TaskCard({ task, onComplete }) {
-  const isUrgent = task.isUrgent;
+  // task 데이터에서 필요한 정보 추출 및 계산
+  const { timeLeft, isUrgent } = calculateTimeInfo(task.dueAt);
+  const icon = getChoreIcon(task.choreName);
+
+  // 날짜 포맷 (예: 8/10(월))
+  const formattedDate = task.dueAt
+    ? new Date(task.dueAt).toLocaleDateString("ko-KR", {
+        month: "numeric",
+        day: "numeric",
+        weekday: "short",
+      })
+    : "상시";
 
   return (
     <li
@@ -10,7 +58,7 @@ function TaskCard({ task, onComplete }) {
       }`}
     >
       <div className="flex items-start justify-between mb-4">
-        <span className="text-[36px]">{task.icon}</span>
+        <span className="text-[36px]">{icon}</span>
 
         <div
           className={`px-3.5 py-1.5 rounded-full text-[13px] font-bold flex items-center gap-1.5 ${
@@ -18,12 +66,12 @@ function TaskCard({ task, onComplete }) {
           }`}
         >
           <LuClock className="w-3.5 h-3.5" />
-          {task.timeLeft}
+          {timeLeft}
         </div>
       </div>
 
-      <h3 className="mb-1 text-xl font-bold text-[#111]">{task.title}</h3>
-      <p className="mb-7 text-[14px] text-[#888]">{task.frequency}</p>
+      <h3 className="mb-1 text-xl font-bold text-[#111]">{task.choreName}</h3>
+      <p className="mb-7 text-[14px] text-[#888]">마감일: {formattedDate}</p>
 
       <div className="flex gap-2">
         <button
