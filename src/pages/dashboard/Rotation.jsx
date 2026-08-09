@@ -1,10 +1,8 @@
 import { useOutletContext } from "react-router";
-
 import useRotation from "../../hooks/useRotation";
 
 export default function Rotation() {
-  const { activeGroup } =
-    useOutletContext();
+  const { activeGroup } = useOutletContext();
 
   const {
     activeTab,
@@ -13,9 +11,7 @@ export default function Rotation() {
     setExpandedWeek,
     weeks,
     occurrences,
-  } = useRotation(
-    activeGroup?.groupPublicId ?? "",
-  );
+  } = useRotation(activeGroup?.groupPublicId ?? "");
 
   // 🌟 날짜+요일+시간을 예쁘게 포맷팅하는 헬퍼 함수
   const formatDateTime = (dateString) => {
@@ -113,11 +109,18 @@ export default function Rotation() {
                     <ul className="space-y-3">
                       {sortedOccurrences.map((occurrence) => {
                         const assignee = occurrence.currentAssignee;
+                        // 🌟 추가: 완료된 상태인지 확인
+                        const isCompleted = occurrence.status === "COMPLETED";
 
                         return (
                           <li
                             key={occurrence.occurrenceId}
-                            className="flex items-center justify-between p-5 bg-[#F9F9F7] rounded-2xl"
+                            // 🌟 추가: 완료된 업무는 배경을 조금 다르게 주거나 투명도를 주어 구분
+                            className={`flex items-center justify-between p-5 rounded-2xl transition-all ${
+                              isCompleted
+                                ? "bg-gray-50 opacity-60"
+                                : "bg-[#F9F9F7]"
+                            }`}
                           >
                             <div className="flex items-center gap-4">
                               <span className="text-2xl">
@@ -126,10 +129,15 @@ export default function Rotation() {
                                   : "🍽️"}
                               </span>
                               <div>
-                                <h4 className="font-bold text-gray-900">
+                                <h4
+                                  className={`font-bold ${
+                                    isCompleted
+                                      ? "text-gray-500 line-through" // 완료 시 취소선
+                                      : "text-gray-900"
+                                  }`}
+                                >
                                   {occurrence.choreName}
                                 </h4>
-                                {/* 🌟 포맷팅된 날짜/시간 적용 */}
                                 <p className="text-sm text-gray-500 mt-1">
                                   {formatDateTime(occurrence.dueAt)}
                                 </p>
@@ -137,7 +145,12 @@ export default function Rotation() {
                             </div>
 
                             <div className="flex items-center gap-3">
-                              {assignee ? (
+                              {/* 🌟 수정: 상태(status)에 따라 렌더링 분기 처리 */}
+                              {isCompleted ? (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-green-700 bg-green-100 rounded-full">
+                                  ✓ 완료됨
+                                </span>
+                              ) : assignee ? (
                                 <>
                                   <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-gray-400 rounded-full">
                                     {assignee.displayName.charAt(0)}
