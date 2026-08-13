@@ -6,6 +6,7 @@ import {
   MapPin,
   Settings,
   ShieldCheck,
+  Trash2,
   UserRound,
 } from "lucide-react";
 
@@ -18,7 +19,6 @@ import useLeaveHouse from "../../hooks/useLeaveHouse";
 import useMembers from "../../hooks/useMembers";
 
 function AccountPage() {
-  // Layout에서 조회한 사용자와 현재 하우스 정보를 받습니다.
   const { profile } = useOutletContext();
 
   const {
@@ -30,7 +30,6 @@ function AccountPage() {
     updateCurrentGroup,
   } = profile;
 
-  // 관리자 승격 화면에 사용할 멤버 정보를 불러옵니다.
   const {
     members,
     canManage,
@@ -41,16 +40,17 @@ function AccountPage() {
     house?.groupPublicId ?? "",
   );
 
-  // 하우스 탈퇴 및 마지막 구성원의 하우스 삭제 기능입니다.
   const {
     isCheckingMembers,
     isLeaving,
     isDeleting,
     isDeleteModalOpen,
+    deleteMode,
     errorMessage: leaveErrorMessage,
     handleLeaveHouse,
+    openDeleteModal,
     closeDeleteModal,
-    handleConfirmLastMemberDelete,
+    handleConfirmDelete,
   } = useLeaveHouse(house);
 
   if (isLoading) {
@@ -69,7 +69,6 @@ function AccountPage() {
   return (
     <div className="min-h-full text-[#1A1428]">
       <div className="mx-auto max-w-3xl p-5 pb-8 sm:p-8">
-        {/* 페이지 제목 */}
         <header>
           <p className="text-sm text-[#8B8575]">
             내 정보와 하우스 설정을 한곳에서 관리해요
@@ -84,7 +83,6 @@ function AccountPage() {
           </h1>
         </header>
 
-        {/* 사용자 또는 하우스 정보 조회 오류 */}
         {profileErrorMessage && (
           <p
             role="alert"
@@ -94,7 +92,6 @@ function AccountPage() {
           </p>
         )}
 
-        {/* 탭 없이 모든 설정을 세로로 보여줍니다. */}
         <div className="mt-8 space-y-5">
           {/* 기타 설정 */}
           <MemberPromotionSection
@@ -131,7 +128,6 @@ function AccountPage() {
             <div className="mt-5">
               {user ? (
                 <>
-                  {/* 닉네임은 조회하고 수정할 수 있습니다. */}
                   <NicknameEditor
                     nickname={user.nickname}
                     onUpdated={
@@ -139,7 +135,6 @@ function AccountPage() {
                     }
                   />
 
-                  {/* 이메일은 조회만 가능합니다. */}
                   <InformationRow
                     icon={Mail}
                     label="이메일"
@@ -178,7 +173,6 @@ function AccountPage() {
             {house ? (
               <>
                 <div className="mt-5">
-                  {/* 관리자만 하우스 이름과 주소를 수정할 수 있습니다. */}
                   {house.role === "OWNER" ? (
                     <HouseInformationEditor
                       key={
@@ -210,7 +204,6 @@ function AccountPage() {
                     </>
                   )}
 
-                  {/* 내 역할은 조회만 가능합니다. */}
                   <InformationRow
                     icon={ShieldCheck}
                     label="내 역할"
@@ -222,16 +215,17 @@ function AccountPage() {
                   />
                 </div>
 
-                {/* 하우스 탈퇴 기능도 하우스 정보 안에 배치합니다. */}
+                {/* 하우스 탈퇴 */}
                 <div className="mt-6 border-t border-[#E63946]/20 pt-6">
                   <h3 className="font-black text-[#E63946]">
                     하우스 탈퇴
                   </h3>
 
                   <p className="mt-2 text-sm leading-6 text-[#8B8575]">
-                    하우스를 탈퇴하면 해당 하우스의 업무,
-                    일정 및 예약 정보를 확인할 수 없어요.
-                    계정 자체는 삭제되지 않습니다.
+                    이 하우스에서 나가더라도 다른
+                    구성원은 계속 하우스를 사용할 수
+                    있어요. 계정 자체는 삭제되지
+                    않습니다.
                   </p>
 
                   {leaveErrorMessage &&
@@ -265,11 +259,46 @@ function AccountPage() {
                       ? "구성원 확인 중..."
                       : isLeaving
                         ? "탈퇴하는 중..."
-                        : isDeleting
-                          ? "삭제하는 중..."
-                          : "하우스 탈퇴하기"}
+                        : "하우스 탈퇴하기"}
                   </button>
                 </div>
+
+                {/* 관리자 전용 하우스 삭제 */}
+                {house.role === "OWNER" && (
+                  <div className="mt-6 border-t border-[#E63946]/20 pt-6">
+                    <h3 className="font-black text-[#E63946]">
+                      하우스 삭제
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-[#8B8575]">
+                      구성원 수와 관계없이 하우스 전체를
+                      삭제합니다. 모든 구성원이 하우스에서
+                      나가게 되며 다시 복구할 수 없어요.
+                    </p>
+
+                    <button
+                      type="button"
+                      onClick={
+                        openDeleteModal
+                      }
+                      disabled={
+                        isCheckingMembers ||
+                        isLeaving ||
+                        isDeleting
+                      }
+                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#E63946] py-3.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-6"
+                    >
+                      <Trash2
+                        size={17}
+                        aria-hidden="true"
+                      />
+
+                      {isDeleting
+                        ? "삭제하는 중..."
+                        : "하우스 삭제하기"}
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <p className="mt-5 rounded-xl bg-[#F8F4EE] px-4 py-5 text-center text-sm font-semibold text-[#8B8575]">
@@ -280,17 +309,17 @@ function AccountPage() {
         </div>
       </div>
 
-      {/* 마지막 구성원이 탈퇴하면 표시되는 삭제 확인창 */}
       {isDeleteModalOpen && house && (
         <DeleteHouseModal
           houseName={house.groupName}
+          deleteMode={deleteMode}
           isDeleting={isDeleting}
           errorMessage={
             leaveErrorMessage
           }
           onClose={closeDeleteModal}
           onConfirm={
-            handleConfirmLastMemberDelete
+            handleConfirmDelete
           }
         />
       )}
