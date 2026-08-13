@@ -1,30 +1,34 @@
 export const mockMembers = [
   {
-    memberId: "member-1",
-    groupId: "group-1", // 업무(Chore)와 동일한 그룹 ID
-    name: "김지수",
-    avatarUrl: null,
-    color: "bg-red-400",
+    membershipId:
+      "11111111-1111-1111-1111-111111111111",
+    displayName: "김지수",
+    role: "OWNER",
+    status: "ACTIVE",
+    version: 1,
   },
   {
-    memberId: "member-2",
-    groupId: "group-1",
-    name: "이민준",
-    avatarUrl: null,
-    color: "bg-green-400",
+    membershipId:
+      "22222222-2222-2222-2222-222222222222",
+    displayName: "이민준",
+    role: "MEMBER",
+    status: "ACTIVE",
+    version: 1,
   },
   {
-    memberId: "member-3",
-    groupId: "group-1",
-    name: "박서연",
-    avatarUrl: null,
-    color: "bg-yellow-400",
+    membershipId:
+      "33333333-3333-3333-3333-333333333333",
+    displayName: "박서연",
+    role: "MEMBER",
+    status: "ACTIVE",
+    version: 1,
   },
   {
-    memberId: "member-4",
-    groupId: "group-1",
-    name: "최태양",
-    avatarUrl: null,
-    color: "bg-blue-400",
+    membershipId:
+      "44444444-4444-4444-4444-444444444444",
+    displayName: "최태양",
+    role: "MEMBER",
+    status: "ACTIVE",
+    version: 1,
   },
 ];
