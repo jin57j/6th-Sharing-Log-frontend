@@ -8,7 +8,6 @@ import {
   Megaphone,
   RotateCcw,
   Settings,
-  UserRound,
   Users,
 } from "lucide-react";
 
@@ -64,12 +63,7 @@ export const SECONDARY_MENU_ITEMS = [
   },
   {
     to: "/settings",
-    label: "설정 · 규칙",
+    label: "설정",
     icon: Settings,
-  },
-  {
-    to: "/account",
-    label: "계정",
-    icon: UserRound,
   },
 ];

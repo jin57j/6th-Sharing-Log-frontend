@@ -1,4 +1,5 @@
 import {
+  Navigate,
   Route,
   Routes,
 } from "react-router";
@@ -101,8 +102,19 @@ function App() {
         />
 
         <Route
-          path="/account"
+          path="/settings"
           element={<AccountPage />}
+        />
+
+        {/* 기존 계정 주소로 접근하면 새 설정 화면으로 이동합니다. */}
+        <Route
+          path="/account"
+          element={
+            <Navigate
+              to="/settings"
+              replace
+            />
+          }
         />
       </Route>
     </Routes>
