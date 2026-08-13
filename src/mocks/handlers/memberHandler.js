@@ -1,21 +1,26 @@
-import { http, HttpResponse } from "msw";
-import { mockMembers } from "../memberData"; // 실제 멤버 데이터 파일 경로에 맞게 수정해주세요
+import {
+  http,
+  HttpResponse,
+} from "msw";
+
+import { mockMembers } from "../memberData";
 
 export const memberHandler = [
-  // ----------------------------------------------------
-  // [GET] 그룹 멤버 목록 조회 API
-  // 주소: /api/groups/{groupId}/members
-  // ----------------------------------------------------
-  http.get("/api/groups/:groupId/members", ({ params }) => {
-    const { groupId } = params;
+  http.get(
+    "/api/groups/:groupId/rotation-members",
+    ({ params }) => {
+      return HttpResponse.json({
+        groupId: params.groupId,
 
-    // 1️⃣ 전체 멤버 목데이터에서 현재 요청한 그룹(groupId)에 속한 사람만 찾아냅니다.
-    const groupMembers = mockMembers.filter(
-      (member) => member.groupId === groupId,
-    );
+        // 첫 번째 Mock 멤버를 현재 로그인 사용자로 가정합니다.
+        actorMembershipId:
+          mockMembers[0].membershipId,
 
-    return HttpResponse.json({
-      items: groupMembers,
-    });
-  }),
+        // Mock 사용자는 OWNER이므로 관리 권한이 있습니다.
+        canManage: true,
+
+        items: mockMembers,
+      });
+    },
+  ),
 ];
