@@ -93,7 +93,6 @@ function Members() {
               <MemberItem
                 key={member.membershipId}
                 member={member}
-                index={index}
                 actorMembershipId={actorMembershipId}
                 isLastMember={index === sortedMembers.length - 1}
               />

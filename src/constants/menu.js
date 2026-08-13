@@ -1,5 +1,6 @@
 import {
   BellRing,
+  Calendar,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
@@ -26,6 +27,11 @@ export const PRIMARY_MENU_ITEMS = [
     to: "/task",
     label: "업무 · 일정",
     icon: ClipboardList,
+  },
+  {
+    to: "/calendar",
+    label: "달력",
+    icon: Calendar,
   },
   {
     to: "/members",

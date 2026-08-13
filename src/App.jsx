@@ -1,9 +1,13 @@
-import { Route, Routes } from "react-router";
+import {
+  Route,
+  Routes,
+} from "react-router";
 
 import Layout from "./components/layout/Layout";
 import LoginPage from "./pages/auth/LoginPage";
 import ProfileSetupPage from "./pages/auth/ProfileSetupPage";
 import AccountPage from "./pages/dashboard/AccountPage";
+import Calendar from "./pages/dashboard/Calendar";
 import CompletedTasks from "./pages/dashboard/CompletedTasks";
 import Home from "./pages/dashboard/Home";
 import Members from "./pages/dashboard/Members";
@@ -20,7 +24,6 @@ import SelectHousePage from "./pages/house/SelectHousePage";
 function App() {
   return (
     <Routes>
-      {/* 로그인 및 하우스 입장 화면 */}
       <Route
         path="/"
         element={<LoginPage />}
@@ -51,7 +54,6 @@ function App() {
         element={<JoinHousePage />}
       />
 
-      {/* 공통 사이드바와 하단 메뉴를 사용하는 대시보드 */}
       <Route element={<Layout />}>
         <Route
           path="/home"
@@ -66,6 +68,11 @@ function App() {
         <Route
           path="/task"
           element={<Task />}
+        />
+
+        <Route
+          path="/calendar"
+          element={<Calendar />}
         />
 
         <Route
