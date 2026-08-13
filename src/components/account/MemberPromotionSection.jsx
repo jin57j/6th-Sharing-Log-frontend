@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 
 import usePromoteMember from "../../hooks/usePromoteMember";
+import InvitationReissueControl from "./InvitationReissueControl";
 import MemberAvatar from "../member/MemberAvatar";
 
 function MemberPromotionSection({
@@ -25,7 +26,8 @@ function MemberPromotionSection({
   });
 
   const promotableMembers = members.filter(
-    (member) => member.role === "MEMBER",
+    (member) =>
+      member.role === "MEMBER",
   );
 
   return (
@@ -42,10 +44,18 @@ function MemberPromotionSection({
       </div>
 
       <p className="mt-1 text-sm leading-6 text-[#8B8575]">
-        하우스 멤버의 권한과 기타 설정을
-        관리할 수 있어요.
+        하우스 초대와 멤버 권한을 관리할 수
+        있어요.
       </p>
 
+      {/* 초대 링크 재발급 */}
+      <div className="mt-6 border-t border-[#1A1428]/10 pt-5">
+        <InvitationReissueControl
+          house={house}
+        />
+      </div>
+
+      {/* 관리자 지정 */}
       <div className="mt-6 border-t border-[#1A1428]/10 pt-5">
         <div className="flex items-center gap-2">
           <ShieldCheck
@@ -76,14 +86,16 @@ function MemberPromotionSection({
           </p>
         )}
 
-        {house && canManage && isLoading && (
-          <p
-            role="status"
-            className="mt-4 rounded-xl bg-[#F8F4EE] px-4 py-4 text-sm font-semibold text-[#8B8575]"
-          >
-            멤버 목록을 불러오는 중이에요...
-          </p>
-        )}
+        {house &&
+          canManage &&
+          isLoading && (
+            <p
+              role="status"
+              className="mt-4 rounded-xl bg-[#F8F4EE] px-4 py-4 text-sm font-semibold text-[#8B8575]"
+            >
+              멤버 목록을 불러오는 중이에요...
+            </p>
+          )}
 
         {house &&
           canManage &&
@@ -101,7 +113,8 @@ function MemberPromotionSection({
           canManage &&
           !isLoading &&
           !memberErrorMessage &&
-          promotableMembers.length === 0 && (
+          promotableMembers.length ===
+            0 && (
             <p className="mt-4 rounded-xl bg-[#F8F4EE] px-4 py-4 text-sm font-semibold text-[#8B8575]">
               관리자로 지정할 일반 멤버가 없어요.
             </p>
@@ -111,7 +124,8 @@ function MemberPromotionSection({
           canManage &&
           !isLoading &&
           !memberErrorMessage &&
-          promotableMembers.length > 0 && (
+          promotableMembers.length >
+            0 && (
             <div className="mt-4 overflow-hidden rounded-xl border border-[#1A1428]/10">
               {promotableMembers.map(
                 (member, index) => {
@@ -154,11 +168,9 @@ function MemberPromotionSection({
                             member,
                           )
                         }
-                        disabled={
-                          Boolean(
-                            promotingMembershipId,
-                          )
-                        }
+                        disabled={Boolean(
+                          promotingMembershipId,
+                        )}
                         className="shrink-0 rounded-lg border border-[#E63946] px-3 py-2 text-xs font-bold text-[#E63946] transition hover:bg-[#E63946] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isPromoting
