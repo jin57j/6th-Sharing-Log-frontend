@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink } from "react-router";
 import {
   ArrowLeftRight,
-  FileText,
   LogOut,
   Menu,
   X,
@@ -94,16 +93,10 @@ function MobileHeader({ onOpenMenu }) {
 
       <Logo />
 
-      <NavLink
-        to="/notice"
-        aria-label="공지 보기"
-        className="rounded-lg p-1.5 text-[#1A1428] transition-colors hover:bg-[#EFEBE2]"
-      >
-        <FileText
-          size={20}
-          aria-hidden="true"
-        />
-      </NavLink>
+      <span
+        className="h-8 w-8"
+        aria-hidden="true"
+      />
     </header>
   );
 }

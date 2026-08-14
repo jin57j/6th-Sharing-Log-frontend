@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import { LuBell } from "react-icons/lu";
 
-import NoticeItem from "../../components/common/NoticeItem";
 import TaskCard from "../../components/common/TaskCard";
-import { mockNotices } from "../../mocks/homeData";
 import { getFormattedToday } from "../../utils/date";
 import { rotationApi } from "../../api/rotationApi"; // 🌟 추가: 로테이션 API 임포트
 
@@ -126,29 +124,6 @@ function Home() {
             </p>
           </div>
         )}
-      </section>
-
-      {/* 공지 섹션 */}
-      <section>
-        <header className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">최근 공지</h2>
-          <button
-            type="button"
-            onClick={() => navigate("/notice")}
-            className="cursor-pointer bg-transparent text-[14px] font-bold text-[#D9534F]"
-          >
-            전체 보기
-          </button>
-        </header>
-        <ul className="overflow-hidden rounded-[16px] border border-gray-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          {mockNotices.map((notice, index) => (
-            <NoticeItem
-              key={notice.id}
-              notice={notice}
-              isLast={index === mockNotices.length - 1}
-            />
-          ))}
-        </ul>
       </section>
     </div>
   );

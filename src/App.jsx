@@ -12,7 +12,6 @@ import Calendar from "./pages/dashboard/Calendar";
 import CompletedTasks from "./pages/dashboard/CompletedTasks";
 import Home from "./pages/dashboard/Home";
 import Members from "./pages/dashboard/Members";
-import Notice from "./pages/dashboard/Notice";
 import Notification from "./pages/dashboard/Notification";
 import Reservation from "./pages/dashboard/Reservation";
 import Rotation from "./pages/dashboard/Rotation";
@@ -89,11 +88,6 @@ function App() {
         <Route
           path="/completed-tasks"
           element={<CompletedTasks />}
-        />
-
-        <Route
-          path="/notice"
-          element={<Notice />}
         />
 
         <Route

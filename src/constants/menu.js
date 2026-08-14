@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   ClipboardList,
   Home,
-  Megaphone,
   RotateCcw,
   Settings,
   Users,
@@ -45,11 +44,6 @@ export const PRIMARY_MENU_ITEMS = [
 ];
 
 export const SECONDARY_MENU_ITEMS = [
-  {
-    to: "/notice",
-    label: "공지",
-    icon: Megaphone,
-  },
   {
     to: "/notification",
     label: "알림",

@@ -24,25 +24,3 @@ export const mockMyTasks = [
         isUrgent: true,
     },
 ];
-
-// 홈 아래에 뜨는 공지사항 데이터
-export const mockNotices = [
-    {
-        id: 1,
-        title: "공지 1의 제목(MOCKDATA)",
-        desc: "공지 1의 내용(MOCKDATA)",
-        date: "오늘(MOCKDATA)",
-    },
-    {
-        id: 2,
-        title: "공지 2의 제목(MOCKDATA)",
-        desc: "공지 2의 내용(MOCKDATA)",
-        date: "어제(MOCKDATA)",
-    },
-    {
-        id: 3,
-        title: "공지 3의 제목(MOCKDATA)",
-        desc: "공지 3의 내용(MOCKDATA)",
-        date: "7월 13일(MOCKDATA)",
-    },
-];
