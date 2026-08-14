@@ -122,6 +122,38 @@ export async function getSubstituteRequests(
   return responseBody?.items ?? [];
 }
 
+// 현재 배정된 업무의 대타를 그룹 멤버 전체에게 요청
+export async function createSubstituteRequest({
+  groupId,
+  occurrenceId,
+  reason,
+  version,
+}) {
+  const csrf = await getCsrfToken();
+
+  const response = await fetch(
+    buildBackendUrl(
+      `/api/groups/${encodeGroupId(groupId)}/occurrences/${encodeURIComponent(occurrenceId)}/substitute-requests`,
+    ),
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+        "Idempotency-Key": crypto.randomUUID(),
+        ...(version !== undefined && version !== null
+          ? { "If-Match": `"${version}"` }
+          : {}),
+      },
+      body: JSON.stringify({ reason }),
+    },
+  );
+
+  return handleResponse(response);
+}
+
 // 대타 요청에 수락 또는 거절로 응답
 export async function respondToSubstituteRequest({
   groupId,

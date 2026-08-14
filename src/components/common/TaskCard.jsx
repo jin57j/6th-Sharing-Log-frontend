@@ -1,4 +1,5 @@
 import { LuClock, LuHandshake, LuCheck } from "react-icons/lu";
+import { getChoreIcon } from "../../utils/choreUtils";
 
 //마감 시간 계산 헬퍼 함수
 const calculateTimeInfo = (dueAt) => {
@@ -27,17 +28,7 @@ const calculateTimeInfo = (dueAt) => {
   }
 };
 
-// 업무 이름에 따른 자동 아이콘 매핑
-const getChoreIcon = (choreName = "") => {
-  if (choreName.includes("쓰레기") || choreName.includes("분리수거"))
-    return "🗑️";
-  if (choreName.includes("주방") || choreName.includes("설거지")) return "🍽️";
-  if (choreName.includes("화장실") || choreName.includes("청소")) return "🚽";
-  if (choreName.includes("빨래") || choreName.includes("세탁")) return "🧺";
-  return "📝";
-};
-
-function TaskCard({ task, onComplete }) {
+function TaskCard({ task, onComplete, onRequestSubstitute }) {
   // task 데이터에서 필요한 정보 추출 및 계산
   const { timeLeft, isUrgent } = calculateTimeInfo(task.dueAt);
   const icon = getChoreIcon(task.choreName);
@@ -76,6 +67,7 @@ function TaskCard({ task, onComplete }) {
       <div className="flex gap-2">
         <button
           type="button"
+          onClick={() => onRequestSubstitute(task)}
           className="flex-1 py-2.5 bg-white border border-gray-200 rounded-full text-[#111] font-bold text-[14px] flex justify-center items-center gap-1.5 hover:bg-gray-50 transition-colors"
         >
           <LuHandshake className="w-[18px] h-[18px]" />

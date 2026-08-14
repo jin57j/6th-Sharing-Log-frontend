@@ -36,8 +36,17 @@ function Rotation() {
 
   // 데이터 패칭
   const { chores, isLoading: isTaskLoading } = useTasks(groupId);
-  const { occurrences, planningRange, isLoading: isCalendarLoading, errorMessage: calendarErrorMessage } = useCalendar(groupId);
-  const { actorMembershipId, isLoading: isMemberLoading, errorMessage: memberErrorMessage } = useMembers(groupId);
+  const {
+    occurrences,
+    planningRange,
+    isLoading: isCalendarLoading,
+    errorMessage: calendarErrorMessage,
+  } = useCalendar(groupId);
+  const {
+    actorMembershipId,
+    isLoading: isMemberLoading,
+    errorMessage: memberErrorMessage,
+  } = useMembers(groupId);
 
   const isLoading = isTaskLoading || isCalendarLoading || isMemberLoading;
   const errorMessage = calendarErrorMessage || memberErrorMessage;
@@ -53,7 +62,7 @@ function Rotation() {
   const visibleOccurrences = useMemo(() => {
     if (calendarTab === "all") return selectedChoreOccurrences;
     return selectedChoreOccurrences.filter(
-      (occ) => getOccurrenceAssignee(occ)?.membershipId === actorMembershipId
+      (occ) => getOccurrenceAssignee(occ)?.membershipId === actorMembershipId,
     );
   }, [selectedChoreOccurrences, calendarTab, actorMembershipId]);
 
@@ -71,17 +80,26 @@ function Rotation() {
 
   const calendarCells = useMemo(
     () => createCalendarCells(displayedMonth.year, displayedMonth.month),
-    [displayedMonth.year, displayedMonth.month]
+    [displayedMonth.year, displayedMonth.month],
   );
 
-  const selectedOccurrences = selectedDateKey ? occurrencesByDate.get(selectedDateKey) ?? [] : [];
-  const currentOccurrence = useMemo(() => findCurrentOccurrence(selectedChoreOccurrences), [selectedChoreOccurrences]);
+  const selectedOccurrences = selectedDateKey
+    ? (occurrencesByDate.get(selectedDateKey) ?? [])
+    : [];
+  const currentOccurrence = useMemo(
+    () => findCurrentOccurrence(selectedChoreOccurrences),
+    [selectedChoreOccurrences],
+  );
   const planningStartDate = parseDateKey(planningRange?.fromInclusive);
   const planningLastDate = getPlanningLastDate(planningRange?.toExclusive);
 
   const displayedMonthNumber = displayedMonth.year * 12 + displayedMonth.month;
-  const firstPlanningMonthNumber = planningStartDate ? planningStartDate.getFullYear() * 12 + planningStartDate.getMonth() : displayedMonthNumber;
-  const lastPlanningMonthNumber = planningLastDate ? planningLastDate.getFullYear() * 12 + planningLastDate.getMonth() : displayedMonthNumber;
+  const firstPlanningMonthNumber = planningStartDate
+    ? planningStartDate.getFullYear() * 12 + planningStartDate.getMonth()
+    : displayedMonthNumber;
+  const lastPlanningMonthNumber = planningLastDate
+    ? planningLastDate.getFullYear() * 12 + planningLastDate.getMonth()
+    : displayedMonthNumber;
 
   const canMovePrevious = displayedMonthNumber > firstPlanningMonthNumber;
   const canMoveNext = displayedMonthNumber < lastPlanningMonthNumber;
@@ -95,8 +113,15 @@ function Rotation() {
   }
 
   function moveMonth(amount) {
-    const nextDate = new Date(displayedMonth.year, displayedMonth.month + amount, 1);
-    setDisplayedMonth({ year: nextDate.getFullYear(), month: nextDate.getMonth() });
+    const nextDate = new Date(
+      displayedMonth.year,
+      displayedMonth.month + amount,
+      1,
+    );
+    setDisplayedMonth({
+      year: nextDate.getFullYear(),
+      month: nextDate.getMonth(),
+    });
     setSelectedDateKey("");
   }
 
@@ -159,21 +184,34 @@ function Rotation() {
         {/* 상태별 화면 */}
         {isLoading && (
           <div className="mt-6 rounded-2xl border border-[#1A1428]/10 bg-white px-5 py-12 text-center">
-            <p role="status" className="text-sm font-semibold text-[#8B8575]">업무 로테이션을 불러오는 중이에요...</p>
+            <p role="status" className="text-sm font-semibold text-[#8B8575]">
+              업무 로테이션을 불러오는 중이에요...
+            </p>
           </div>
         )}
 
         {!isLoading && errorMessage && (
-          <div role="alert" className="mt-6 rounded-2xl border border-[#E63946]/20 bg-[#E63946]/5 px-5 py-5">
-            <p className="text-sm font-semibold leading-6 text-[#E63946]">{errorMessage}</p>
+          <div
+            role="alert"
+            className="mt-6 rounded-2xl border border-[#E63946]/20 bg-[#E63946]/5 px-5 py-5"
+          >
+            <p className="text-sm font-semibold leading-6 text-[#E63946]">
+              {errorMessage}
+            </p>
           </div>
         )}
 
         {!isLoading && !errorMessage && chores.length === 0 && (
           <div className="mt-6 rounded-2xl border border-dashed border-[#1A1428]/15 bg-white px-5 py-12 text-center">
-            <RotateCcw size={34} className="mx-auto text-[#8B8575]" aria-hidden="true" />
+            <RotateCcw
+              size={34}
+              className="mx-auto text-[#8B8575]"
+              aria-hidden="true"
+            />
             <p className="mt-3 text-sm font-bold">아직 등록된 업무가 없어요.</p>
-            <p className="mt-1 text-xs text-[#8B8575]">업무·일정 화면에서 반복 업무를 추가해 주세요.</p>
+            <p className="mt-1 text-xs text-[#8B8575]">
+              업무·일정 화면에서 반복 업무를 추가해 주세요.
+            </p>
           </div>
         )}
 

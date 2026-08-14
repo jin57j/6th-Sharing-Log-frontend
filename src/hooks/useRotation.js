@@ -22,7 +22,7 @@ const generateWeeks = () => {
 
   for (
     let index = 0;
-    index < 3;
+    index < 4;
     index += 1
   ) {
     const start = new Date(
