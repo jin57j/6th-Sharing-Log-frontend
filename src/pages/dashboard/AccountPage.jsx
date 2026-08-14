@@ -13,10 +13,9 @@ import {
 import DeleteHouseModal from "../../components/account/DeleteHouseModal";
 import HouseInformationEditor from "../../components/account/HouseInformationEditor";
 import InformationRow from "../../components/account/InformationRow";
-import MemberPromotionSection from "../../components/account/MemberPromotionSection";
 import NicknameEditor from "../../components/account/NicknameEditor";
+import OtherSettingsSection from "../../components/account/OtherSettingsSection";
 import useLeaveHouse from "../../hooks/useLeaveHouse";
-import useMembers from "../../hooks/useMembers";
 
 function AccountPage() {
   const { profile } = useOutletContext();
@@ -29,16 +28,6 @@ function AccountPage() {
     updateCurrentUser,
     updateCurrentGroup,
   } = profile;
-
-  const {
-    members,
-    canManage,
-    isLoading: isMembersLoading,
-    errorMessage: memberErrorMessage,
-    updateMemberRole,
-  } = useMembers(
-    house?.groupPublicId ?? "",
-  );
 
   const {
     isCheckingMembers,
@@ -93,19 +82,12 @@ function AccountPage() {
         )}
 
         <div className="mt-8 space-y-5">
-          {/* 기타 설정 */}
-          <MemberPromotionSection
-            house={house}
-            members={members}
-            canManage={canManage}
-            isLoading={isMembersLoading}
-            memberErrorMessage={
-              memberErrorMessage
-            }
-            onMemberRoleUpdated={
-              updateMemberRole
-            }
-          />
+          {/* 관리자에게만 보이는 기타 설정 */}
+          {house?.role === "OWNER" && (
+            <OtherSettingsSection
+              house={house}
+            />
+          )}
 
           {/* 내 정보 */}
           <section className="rounded-2xl border border-[#1A1428]/10 bg-white p-6 shadow-sm">
