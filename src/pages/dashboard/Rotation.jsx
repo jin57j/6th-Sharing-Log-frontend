@@ -1,185 +1,231 @@
+import { useMemo, useState } from "react";
+import { RotateCcw, Sparkles } from "lucide-react";
 import { useOutletContext } from "react-router";
-import useRotation from "../../hooks/useRotation";
 
-export default function Rotation() {
+import ChoreCalendarView from "../../components/rotation/ChoreCalendarView";
+import ChoreCategoryList from "../../components/rotation/ChoreCategoryList";
+import useCalendar from "../../hooks/useCalendar";
+import useMembers from "../../hooks/useMembers";
+import useTasks from "../../hooks/useTasks";
+import {
+  createCalendarCells,
+  formatDateKey,
+  getOccurrenceDateKey,
+  getPlanningLastDate,
+  parseDateKey,
+} from "../../utils/calendarUtils";
+import {
+  findCurrentOccurrence,
+  getOccurrenceAssignee,
+} from "../../utils/rotationUtils";
+
+function Rotation() {
   const { activeGroup } = useOutletContext();
+  const groupId = activeGroup?.groupPublicId ?? "";
+  const houseName = activeGroup?.groupName ?? "현재 하우스";
+  const today = new Date();
 
+  // 상태 관리
+  const [selectedChore, setSelectedChore] = useState(null);
+  const [calendarTab, setCalendarTab] = useState("mine");
+  const [selectedDateKey, setSelectedDateKey] = useState("");
+  const [displayedMonth, setDisplayedMonth] = useState({
+    year: today.getFullYear(),
+    month: today.getMonth(),
+  });
+
+  // 데이터 패칭
+  const { chores, isLoading: isTaskLoading } = useTasks(groupId);
   const {
-    activeTab,
-    setActiveTab,
-    expandedWeek,
-    setExpandedWeek,
-    weeks,
     occurrences,
-  } = useRotation(activeGroup?.groupPublicId ?? "");
+    planningRange,
+    isLoading: isCalendarLoading,
+    errorMessage: calendarErrorMessage,
+  } = useCalendar(groupId);
+  const {
+    actorMembershipId,
+    isLoading: isMemberLoading,
+    errorMessage: memberErrorMessage,
+  } = useMembers(groupId);
 
-  // 🌟 날짜+요일+시간을 예쁘게 포맷팅하는 헬퍼 함수
-  const formatDateTime = (dateString) => {
-    if (!dateString) return "기한 미정";
-    const d = new Date(dateString);
-    const month = d.getMonth() + 1;
-    const date = d.getDate();
-    const dayName = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
-    const time = d.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
+  const isLoading = isTaskLoading || isCalendarLoading || isMemberLoading;
+  const errorMessage = calendarErrorMessage || memberErrorMessage;
+
+  // 파생 데이터 (Memo)
+  const selectedChoreOccurrences = useMemo(() => {
+    if (!selectedChore) return [];
+    return occurrences
+      .filter((occ) => occ.choreId === selectedChore.choreId)
+      .sort((a, b) => new Date(a.dueAt) - new Date(b.dueAt));
+  }, [occurrences, selectedChore]);
+
+  const visibleOccurrences = useMemo(() => {
+    if (calendarTab === "all") return selectedChoreOccurrences;
+    return selectedChoreOccurrences.filter(
+      (occ) => getOccurrenceAssignee(occ)?.membershipId === actorMembershipId,
+    );
+  }, [selectedChoreOccurrences, calendarTab, actorMembershipId]);
+
+  const occurrencesByDate = useMemo(() => {
+    const map = new Map();
+    visibleOccurrences.forEach((occ) => {
+      const dateKey = getOccurrenceDateKey(occ);
+      if (!dateKey) return;
+      const list = map.get(dateKey) ?? [];
+      list.push(occ);
+      map.set(dateKey, list);
     });
-    return `${month}/${date}(${dayName}) ${time}`;
-  };
+    return map;
+  }, [visibleOccurrences]);
 
-  // 🌟 서버 데이터를 마감 시간(dueAt) 기준 오름차순(시간순)으로 정렬
-  const sortedOccurrences = [...(occurrences || [])].sort(
-    (a, b) => new Date(a.dueAt) - new Date(b.dueAt),
+  const calendarCells = useMemo(
+    () => createCalendarCells(displayedMonth.year, displayedMonth.month),
+    [displayedMonth.year, displayedMonth.month],
   );
 
+  const selectedOccurrences = selectedDateKey
+    ? (occurrencesByDate.get(selectedDateKey) ?? [])
+    : [];
+  const currentOccurrence = useMemo(
+    () => findCurrentOccurrence(selectedChoreOccurrences),
+    [selectedChoreOccurrences],
+  );
+  const planningStartDate = parseDateKey(planningRange?.fromInclusive);
+  const planningLastDate = getPlanningLastDate(planningRange?.toExclusive);
+
+  const displayedMonthNumber = displayedMonth.year * 12 + displayedMonth.month;
+  const firstPlanningMonthNumber = planningStartDate
+    ? planningStartDate.getFullYear() * 12 + planningStartDate.getMonth()
+    : displayedMonthNumber;
+  const lastPlanningMonthNumber = planningLastDate
+    ? planningLastDate.getFullYear() * 12 + planningLastDate.getMonth()
+    : displayedMonthNumber;
+
+  const canMovePrevious = displayedMonthNumber > firstPlanningMonthNumber;
+  const canMoveNext = displayedMonthNumber < lastPlanningMonthNumber;
+
+  // 이벤트 핸들러
+  function openChoreCalendar(chore) {
+    setSelectedChore(chore);
+    setCalendarTab("mine");
+    setSelectedDateKey("");
+    setDisplayedMonth({ year: today.getFullYear(), month: today.getMonth() });
+  }
+
+  function moveMonth(amount) {
+    const nextDate = new Date(
+      displayedMonth.year,
+      displayedMonth.month + amount,
+      1,
+    );
+    setDisplayedMonth({
+      year: nextDate.getFullYear(),
+      month: nextDate.getMonth(),
+    });
+    setSelectedDateKey("");
+  }
+
+  // 1. 달력 상세 뷰
+  if (selectedChore) {
+    return (
+      <ChoreCalendarView
+        selectedChore={selectedChore}
+        houseName={houseName}
+        currentOccurrence={currentOccurrence}
+        actorMembershipId={actorMembershipId}
+        calendarTab={calendarTab}
+        changeCalendarTab={(tab) => {
+          setCalendarTab(tab);
+          setSelectedDateKey("");
+        }}
+        displayedMonth={displayedMonth}
+        moveMonth={moveMonth}
+        canMovePrevious={canMovePrevious}
+        canMoveNext={canMoveNext}
+        isLoading={isLoading}
+        errorMessage={errorMessage}
+        calendarCells={calendarCells}
+        occurrencesByDate={occurrencesByDate}
+        planningRange={planningRange}
+        selectedDateKey={selectedDateKey}
+        setSelectedDateKey={setSelectedDateKey}
+        selectedOccurrences={selectedOccurrences}
+        todayKey={formatDateKey(today)}
+        onClose={() => {
+          setSelectedChore(null);
+          setSelectedDateKey("");
+        }}
+      />
+    );
+  }
+
+  // 2. 메인 로테이션 목록 뷰
   return (
-    <div className="min-h-screen p-8 font-sans bg-[#F7F4EF]">
-      <div className="max-w-4xl mx-auto">
-        {/* 헤더 영역 */}
-        <div className="mb-8">
-          <p className="mb-2 text-sm text-gray-500">우리 집 당번을 한눈에</p>
-          <h1 className="text-3xl font-extrabold text-gray-900">
+    <div className="min-h-full text-[#1A1428]">
+      <div className="mx-auto max-w-2xl p-5 pb-8 sm:p-8">
+        <header>
+          <p className="text-sm text-[#8B8575]">{houseName}의 당번을 한눈에</p>
+          <h1 className="mt-1 flex items-center gap-2 font-display text-[30px] font-black tracking-[-0.03em]">
+            <RotateCcw size={28} aria-hidden="true" />
             업무 로테이션
           </h1>
-        </div>
+        </header>
 
-        {/* 탭 전환 영역 */}
-        <div className="flex p-1 mb-6 bg-gray-100 rounded-full">
-          {[
-            { id: "DAILY", label: "매일 업무" },
-            { id: "WEEKLY", label: "매주 업무" },
-            { id: "BIWEEKLY", label: "격주 업무" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-4 text-sm font-bold rounded-full transition-all ${
-                activeTab === tab.id
-                  ? "bg-white shadow-sm text-red-500"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 안내 배너 */}
-        <div className="p-5 mb-8 border border-green-200 bg-green-50 rounded-2xl">
-          <p className="font-bold text-gray-800">
-            <span className="mr-2">✨</span>
-            로테이션은 구성원 순서대로 자동 배정돼요.
+        <div className="mt-5 rounded-2xl border border-[#06D6A0]/30 bg-[#06D6A0]/10 p-4">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            <Sparkles size={16} className="text-[#06A77D]" aria-hidden="true" />
+            업무를 누르면 담당자 일정을 달력으로 확인할 수 있어요.
           </p>
-          <p className="mt-1 ml-6 text-sm text-gray-500">
-            대타가 수락된 업무는 기존 당번 대신 대타 멤버가 표시됩니다.
+          <p className="mt-1 pl-6 text-xs leading-5 text-[#8B8575]">
+            로테이션은 참여 멤버 순서에 따라 자동으로 배정돼요.
           </p>
         </div>
 
-        {/* 주차별 아코디언 리스트 */}
-        <div className="space-y-4">
-          {weeks.map((week, weekIndex) => (
-            <div
-              key={weekIndex}
-              className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-3xl"
-            >
-              <button
-                onClick={() =>
-                  setExpandedWeek(expandedWeek === weekIndex ? null : weekIndex)
-                }
-                className="flex items-center justify-between w-full p-6 transition-colors hover:bg-gray-50"
-              >
-                <div className="flex items-center gap-4">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {week.label} · {week.dateRange}
-                  </h3>
-                  {week.isCurrent && (
-                    <span className="text-sm font-bold text-red-500">
-                      진행 중인 주
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full text-gray-500">
-                  {expandedWeek === weekIndex ? "▲" : "▼"}
-                </div>
-              </button>
+        {/* 상태별 화면 */}
+        {isLoading && (
+          <div className="mt-6 rounded-2xl border border-[#1A1428]/10 bg-white px-5 py-12 text-center">
+            <p role="status" className="text-sm font-semibold text-[#8B8575]">
+              업무 로테이션을 불러오는 중이에요...
+            </p>
+          </div>
+        )}
 
-              {expandedWeek === weekIndex && (
-                <div className="px-6 pb-6">
-                  {sortedOccurrences.length > 0 ? (
-                    <ul className="space-y-3">
-                      {sortedOccurrences.map((occurrence) => {
-                        const assignee = occurrence.currentAssignee;
-                        // 🌟 추가: 완료된 상태인지 확인
-                        const isCompleted = occurrence.status === "COMPLETED";
+        {!isLoading && errorMessage && (
+          <div
+            role="alert"
+            className="mt-6 rounded-2xl border border-[#E63946]/20 bg-[#E63946]/5 px-5 py-5"
+          >
+            <p className="text-sm font-semibold leading-6 text-[#E63946]">
+              {errorMessage}
+            </p>
+          </div>
+        )}
 
-                        return (
-                          <li
-                            key={occurrence.occurrenceId}
-                            // 🌟 추가: 완료된 업무는 배경을 조금 다르게 주거나 투명도를 주어 구분
-                            className={`flex items-center justify-between p-5 rounded-2xl transition-all ${
-                              isCompleted
-                                ? "bg-gray-50 opacity-60"
-                                : "bg-[#F9F9F7]"
-                            }`}
-                          >
-                            <div className="flex items-center gap-4">
-                              <span className="text-2xl">
-                                {occurrence.choreName?.includes("쓰레기")
-                                  ? "🗑️"
-                                  : "🍽️"}
-                              </span>
-                              <div>
-                                <h4
-                                  className={`font-bold ${
-                                    isCompleted
-                                      ? "text-gray-500 line-through" // 완료 시 취소선
-                                      : "text-gray-900"
-                                  }`}
-                                >
-                                  {occurrence.choreName}
-                                </h4>
-                                <p className="text-sm text-gray-500 mt-1">
-                                  {formatDateTime(occurrence.dueAt)}
-                                </p>
-                              </div>
-                            </div>
+        {!isLoading && !errorMessage && chores.length === 0 && (
+          <div className="mt-6 rounded-2xl border border-dashed border-[#1A1428]/15 bg-white px-5 py-12 text-center">
+            <RotateCcw
+              size={34}
+              className="mx-auto text-[#8B8575]"
+              aria-hidden="true"
+            />
+            <p className="mt-3 text-sm font-bold">아직 등록된 업무가 없어요.</p>
+            <p className="mt-1 text-xs text-[#8B8575]">
+              업무·일정 화면에서 반복 업무를 추가해 주세요.
+            </p>
+          </div>
+        )}
 
-                            <div className="flex items-center gap-3">
-                              {/* 🌟 수정: 상태(status)에 따라 렌더링 분기 처리 */}
-                              {isCompleted ? (
-                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-bold text-green-700 bg-green-100 rounded-full">
-                                  ✓ 완료됨
-                                </span>
-                              ) : assignee ? (
-                                <>
-                                  <div className="flex items-center justify-center w-8 h-8 text-xs font-bold text-white bg-gray-400 rounded-full">
-                                    {assignee.displayName.charAt(0)}
-                                  </div>
-                                  <span className="font-bold text-gray-900">
-                                    {assignee.displayName}
-                                  </span>
-                                </>
-                              ) : (
-                                <span className="text-sm text-gray-400">
-                                  담당자 미정
-                                </span>
-                              )}
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : (
-                    <div className="py-8 text-center text-gray-400">
-                      해당 주기에 배정된 업무가 없습니다.
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+        {/* 업무 목록 렌더링 */}
+        {!isLoading && !errorMessage && (
+          <ChoreCategoryList
+            chores={chores}
+            occurrences={occurrences}
+            onOpenCalendar={openChoreCalendar}
+          />
+        )}
       </div>
     </div>
   );
 }
+
+export default Rotation;

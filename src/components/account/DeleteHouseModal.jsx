@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import {
   AlertTriangle,
   X,
@@ -7,16 +6,22 @@ import {
 
 function DeleteHouseModal({
   houseName,
+  deleteMode,
   isDeleting,
   errorMessage,
   onClose,
   onConfirm,
 }) {
-  const [inputHouseName, setInputHouseName] =
-    useState("");
+  const [
+    inputHouseName,
+    setInputHouseName,
+  ] = useState("");
 
   const isHouseNameMatched =
     inputHouseName.trim() === houseName;
+
+  const isLastMemberDeletion =
+    deleteMode === "last-member";
 
   function handleClose() {
     if (isDeleting) {
@@ -77,17 +82,26 @@ function DeleteHouseModal({
           하우스를 삭제할까요?
         </h2>
 
-        <p className="mt-3 text-sm leading-6 text-[#6F695D]">
-          현재 이 하우스의 마지막
-          구성원이에요.
-          <br />
-          하우스에서 나가면 하우스도 함께
-          삭제됩니다.
-        </p>
+        {isLastMemberDeletion ? (
+          <p className="mt-3 text-sm leading-6 text-[#6F695D]">
+            현재 이 하우스의 마지막
+            구성원이에요.
+            <br />
+            하우스에서 나가면 하우스도 함께
+            삭제됩니다.
+          </p>
+        ) : (
+          <p className="mt-3 text-sm leading-6 text-[#6F695D]">
+            하우스를 삭제하면 현재 참여 중인 모든
+            구성원이 하우스에서 나가게 됩니다.
+            <br />
+            업무, 일정, 예약 정보에도 더 이상
+            접근할 수 없습니다.
+          </p>
+        )}
 
         <p className="mt-3 text-sm font-semibold leading-6 text-[#E63946]">
-          삭제된 하우스는 다시 복구할 수
-          없어요.
+          삭제된 하우스는 다시 복구할 수 없어요.
         </p>
 
         <form
@@ -98,8 +112,8 @@ function DeleteHouseModal({
             htmlFor="delete-house-name"
             className="block text-sm font-bold text-[#1A1428]"
           >
-            확인을 위해 하우스 이름을
-            입력해 주세요.
+            확인을 위해 하우스 이름을 입력해
+            주세요.
           </label>
 
           <p className="mt-2 rounded-xl bg-[#F8F4EE] px-4 py-3 text-sm font-bold text-[#1A1428]">
@@ -125,8 +139,7 @@ function DeleteHouseModal({
           {inputHouseName.length > 0 &&
             !isHouseNameMatched && (
               <p className="mt-2 text-xs font-semibold text-[#E63946]">
-                하우스 이름이 일치하지
-                않습니다.
+                하우스 이름이 일치하지 않습니다.
               </p>
             )}
 
@@ -159,7 +172,9 @@ function DeleteHouseModal({
             >
               {isDeleting
                 ? "삭제하는 중..."
-                : "나가기 및 삭제"}
+                : isLastMemberDeletion
+                  ? "나가기 및 삭제"
+                  : "하우스 삭제"}
             </button>
           </div>
         </form>

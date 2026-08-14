@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Save, UserRound } from "lucide-react";
+import { Pencil, UserRound } from "lucide-react";
 
 import useUpdateNickname from "../../hooks/useUpdateNickname";
 
@@ -128,9 +128,8 @@ export default function NicknameEditor({
               disabled={
                 !isNicknameValid || !hasNicknameChanged || isSaving
               }
-              className="flex items-center justify-center gap-2 rounded-xl bg-[#E63946] px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex items-center justify-center rounded-xl bg-[#E63946] px-4 py-2.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Save size={16} aria-hidden="true" />
               {isSaving ? "저장 중..." : "저장"}
             </button>
           </div>

@@ -215,3 +215,33 @@ export async function updateGroup({
 
   return response.json();
 }
+
+// 일반 멤버를 하우스 관리자로 승격합니다.
+export async function promoteGroupMember({
+  groupPublicId,
+  membershipPublicId,
+  csrf,
+}) {
+  const response = await fetch(
+    buildBackendUrl(
+      `/api/groups/${groupPublicId}/members/${membershipPublicId}/promote`,
+    ),
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        [csrf.headerName]: csrf.token,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    throw await createGroupApiError(
+      response,
+      "멤버를 관리자로 지정하지 못했습니다.",
+    );
+  }
+
+  return response.json();
+}

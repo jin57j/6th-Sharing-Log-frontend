@@ -23,26 +23,29 @@ export default function useLeaveHouse(house) {
   const [isDeleting, setIsDeleting] =
     useState(false);
 
-  const [
-    isDeleteModalOpen,
-    setIsDeleteModalOpen,
-  ] = useState(false);
+  // null: 삭제창 닫힘
+  // last-member: 마지막 구성원이 나가면서 삭제
+  // owner: 관리자가 직접 하우스 삭제
+  const [deleteMode, setDeleteMode] =
+    useState(null);
 
   const [errorMessage, setErrorMessage] =
     useState("");
 
+  const isDeleteModalOpen =
+    deleteMode !== null;
+
   function moveToHouseChoice() {
-    // 삭제하거나 탈퇴한 하우스가 현재 하우스로
-    // 계속 선택되지 않도록 저장값을 제거합니다.
+    // 삭제하거나 탈퇴한 하우스가 계속 선택되지 않도록
+    // 브라우저에 저장한 현재 하우스 ID를 제거합니다.
     clearActiveGroupId();
 
-    // 사용자가 다른 하우스를 선택할 수 있도록
-    // 하우스 선택 화면으로 이동합니다.
     navigate("/house-choice", {
       replace: true,
     });
   }
 
+  // 일반 하우스 탈퇴 버튼입니다.
   async function handleLeaveHouse() {
     if (
       !house ||
@@ -59,7 +62,6 @@ export default function useLeaveHouse(house) {
     let activeMembers;
 
     try {
-      // 현재 하우스의 구성원 목록을 조회합니다.
       const response =
         await memberApi.getRotationMembers(
           house.groupPublicId,
@@ -69,8 +71,6 @@ export default function useLeaveHouse(house) {
         ? response
         : response?.items ?? [];
 
-      // 백엔드 응답에 status가 없는 Mock 데이터도
-      // 테스트할 수 있도록 함께 처리합니다.
       activeMembers = members.filter(
         (member) =>
           !member.status ||
@@ -96,15 +96,13 @@ export default function useLeaveHouse(house) {
       return;
     }
 
-    // 현재 하우스에 나 혼자 남아 있다면
-    // 일반 탈퇴가 아니라 하우스 삭제를 진행합니다.
+    // 마지막 구성원이면 일반 탈퇴 대신
+    // 하우스 이름을 입력한 후 삭제하도록 합니다.
     if (activeMembers.length === 1) {
-      setIsDeleteModalOpen(true);
+      setDeleteMode("last-member");
       return;
     }
 
-    // 다른 구성원이 남아 있으면
-    // 기존 하우스 탈퇴 API를 사용합니다.
     const confirmed = window.confirm(
       `"${house.groupName}"에서 정말 탈퇴하시겠어요?\n탈퇴 후에는 이 하우스의 업무와 일정을 확인할 수 없어요.`,
     );
@@ -145,7 +143,7 @@ export default function useLeaveHouse(house) {
         "LAST_OWNER_CANNOT_LEAVE"
       ) {
         setErrorMessage(
-          "다른 구성원이 남아 있는 마지막 소유자는 탈퇴할 수 없어요. 다른 소유자를 지정한 후 다시 시도해 주세요.",
+          "다른 구성원이 남아 있는 마지막 관리자는 탈퇴할 수 없어요. 다른 멤버를 관리자로 지정한 후 다시 시도해 주세요.",
         );
 
         return;
@@ -172,24 +170,45 @@ export default function useLeaveHouse(house) {
     }
   }
 
+  // 관리자가 구성원 수와 관계없이
+  // 하우스 삭제 확인창을 엽니다.
+  function openDeleteModal() {
+    if (
+      !house ||
+      house.role !== "OWNER" ||
+      isCheckingMembers ||
+      isLeaving ||
+      isDeleting
+    ) {
+      return;
+    }
+
+    setErrorMessage("");
+    setDeleteMode("owner");
+  }
+
   function closeDeleteModal() {
     if (isDeleting) {
       return;
     }
 
     setErrorMessage("");
-    setIsDeleteModalOpen(false);
+    setDeleteMode(null);
   }
 
-  async function handleConfirmLastMemberDelete(
+  // 마지막 구성원 삭제와 관리자 직접 삭제가
+  // 공통으로 사용하는 함수입니다.
+  async function handleConfirmDelete(
     inputHouseName,
   ) {
-    if (!house || isDeleting) {
+    if (
+      !house ||
+      !deleteMode ||
+      isDeleting
+    ) {
       return;
     }
 
-    // 화면에서 한 번 확인했더라도
-    // 요청 직전에 다시 이름을 비교합니다.
     if (
       inputHouseName.trim() !==
       house.groupName
@@ -213,7 +232,7 @@ export default function useLeaveHouse(house) {
         csrf,
       });
 
-      setIsDeleteModalOpen(false);
+      setDeleteMode(null);
       moveToHouseChoice();
     } catch (error) {
       console.error(error);
@@ -228,7 +247,7 @@ export default function useLeaveHouse(house) {
 
       if (error.status === 403) {
         setErrorMessage(
-          "하우스를 삭제할 권한이 없습니다.",
+          "하우스 관리자만 하우스를 삭제할 수 있어요.",
         );
 
         return;
@@ -236,7 +255,7 @@ export default function useLeaveHouse(house) {
 
       if (error.status === 404) {
         setErrorMessage(
-          "삭제할 하우스를 찾을 수 없습니다.",
+          "삭제할 하우스를 찾을 수 없어요.",
         );
 
         return;
@@ -244,7 +263,7 @@ export default function useLeaveHouse(house) {
 
       if (error.status === 409) {
         setErrorMessage(
-          "다른 구성원이 참여하고 있어 하우스를 삭제할 수 없습니다. 구성원 정보를 다시 확인해 주세요.",
+          "하우스 상태가 변경되어 삭제하지 못했습니다. 화면을 새로고침한 후 다시 시도해 주세요.",
         );
 
         return;
@@ -263,10 +282,15 @@ export default function useLeaveHouse(house) {
     isCheckingMembers,
     isLeaving,
     isDeleting,
+
     isDeleteModalOpen,
+    deleteMode,
+
     errorMessage,
+
     handleLeaveHouse,
+    openDeleteModal,
     closeDeleteModal,
-    handleConfirmLastMemberDelete,
+    handleConfirmDelete,
   };
 }

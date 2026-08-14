@@ -2,11 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router";
 import { LuBell } from "react-icons/lu";
 
-import NoticeItem from "../../components/common/NoticeItem";
 import TaskCard from "../../components/common/TaskCard";
-import { mockNotices } from "../../mocks/homeData";
+import SubstituteRequestModal from "../../components/common/SubstituteRequestModal";
+import { createSubstituteRequest } from "../../api/notificationApi";
 import { getFormattedToday } from "../../utils/date";
-import { rotationApi } from "../../api/rotationApi"; // 🌟 추가: 로테이션 API 임포트
+import { rotationApi } from "../../api/rotationApi";
 
 function Home() {
   const today = getFormattedToday();
@@ -16,6 +16,9 @@ function Home() {
 
   const groupId = activeGroup?.groupPublicId;
   const [myTasks, setMyTasks] = useState([]);
+  
+
+  const [selectedTask, setSelectedTask] = useState(null);
 
   // 실제 내 업무(Occurrences) 불러오기
   useEffect(() => {
@@ -29,7 +32,7 @@ function Home() {
         });
 
         const occurrences = response.items || response || [];
-        const now = new Date(); //  현재 시간
+        const now = new Date(); // 현재 시간
 
         // 완료되지 않았으면서 && 마감 시간이 지나지 않은 업무만 필터링
         const pendingTasks = occurrences.filter((task) => {
@@ -70,6 +73,18 @@ function Home() {
     }
   };
 
+  // 대타 요청 처리 함수 추가
+  const handleSubstituteRequest = async (reason) => {
+    await createSubstituteRequest({
+      groupId,
+      occurrenceId: selectedTask.occurrenceId,
+      reason,
+      version: selectedTask.version,
+    });
+    // 요청 완료 후 모달 닫기 (필요시 추가)
+    // setSelectedTask(null);
+  };
+
   const greetingName = isProfileLoading ? "사용자" : nickname || "사용자";
 
   return (
@@ -79,7 +94,7 @@ function Home() {
         <div>
           <p className="mb-2 text-sm text-[#888]">{today}</p>
           <h1 className="text-[28px] font-black text-[#222]">
-            안녕하세요, {greetingName}님 👋
+            안녕하세요 {greetingName}님 👋
           </h1>
         </div>
         <button
@@ -98,7 +113,7 @@ function Home() {
           <div>
             <h2 className="mb-1 flex items-center gap-1.5 text-lg font-bold">
               <span className="text-xs text-[#E53E3E]">🔴</span>
-              오늘과 이번 주, 내 업무
+              오늘과 이번 주 내 업무
             </h2>
             <p className="text-[13px] text-[#888]">
               완료하면 홈에서 사라지고 완료 업무에서 다시 볼 수 있어요.
@@ -113,9 +128,10 @@ function Home() {
           <ul className="flex gap-4 overflow-x-auto pb-2">
             {myTasks.map((task) => (
               <TaskCard
-                key={task.occurrenceId} // choreId 대신 발생 건(occurrence) 단위의 ID 사용
+                key={task.occurrenceId}
                 task={task}
                 onComplete={handleCompleteTask}
+                onRequestSubstitute={setSelectedTask} // 대타 요청 프롭스 연결
               />
             ))}
           </ul>
@@ -128,28 +144,14 @@ function Home() {
         )}
       </section>
 
-      {/* 공지 섹션 */}
-      <section>
-        <header className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold">최근 공지</h2>
-          <button
-            type="button"
-            onClick={() => navigate("/notice")}
-            className="cursor-pointer bg-transparent text-[14px] font-bold text-[#D9534F]"
-          >
-            전체 보기
-          </button>
-        </header>
-        <ul className="overflow-hidden rounded-[16px] border border-gray-100 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          {mockNotices.map((notice, index) => (
-            <NoticeItem
-              key={notice.id}
-              notice={notice}
-              isLast={index === mockNotices.length - 1}
-            />
-          ))}
-        </ul>
-      </section>
+      {/*  대타 요청 모달 추가 */}
+      {selectedTask && (
+        <SubstituteRequestModal
+          task={selectedTask}
+          onClose={() => setSelectedTask(null)}
+          onSubmit={handleSubstituteRequest}
+        />
+      )}
     </div>
   );
 }

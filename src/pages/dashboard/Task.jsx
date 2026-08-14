@@ -4,6 +4,7 @@ import ChoreModal from "../../components/common/ChoreModal";
 import useTasks from "../../hooks/useTasks";
 import { useGroupMembers } from "../../hooks/useGroupMember";
 import { rotationApi } from "../../api/rotationApi";
+import { getChoreIcon } from "../../utils/choreUtils";
 
 const extractMemberIds = (eligibility) => {
   if (!eligibility) return [];
@@ -22,11 +23,9 @@ const extractMemberIds = (eligibility) => {
 };
 
 export default function Task() {
-  const { activeGroup } =
-    useOutletContext();
+  const { activeGroup } = useOutletContext();
 
-  const activeGroupId =
-    activeGroup?.groupPublicId ?? "";
+  const activeGroupId = activeGroup?.groupPublicId ?? "";
 
   const {
     groupId,
@@ -67,7 +66,7 @@ export default function Task() {
       // 1. 모든 응답 데이터를 하나로 합칩니다.
       const allOccurrences = responses.flatMap((res) => res.items || []);
 
-      // 🌟 [핵심 수정] 2. 섞여 있는 전체 일정 중, '지금 누른 업무(choreId)'만 깐깐하게 걸러냅니다!
+      // 2. 섞여 있는 전체 일정 중, '지금 누른 업무(choreId)'만 깐깐하게 걸러냅니다!
       const targetOccurrences = allOccurrences.filter(
         (item) => item.choreId === choreId,
       );
@@ -136,7 +135,9 @@ export default function Task() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="text-2xl">🧹</span>
+                      <span className="text-2xl">
+                        {getChoreIcon(chore.name)}
+                      </span>
                       <div>
                         <h3 className="font-bold text-gray-900">
                           {chore.name}
