@@ -5,6 +5,8 @@ import {
 
 import useNotificationSettings from "../../hooks/useNotificationSettings";
 
+import PushNotificationControl from "./PushNotificationControl";
+
 function NotificationSettingsSection({
   groupId,
 }) {
@@ -36,9 +38,11 @@ function NotificationSettingsSection({
       </div>
 
       <p className="mt-1 text-sm leading-6 text-[#8B8575]">
-        현재 하우스에서 마감 임박
-        업무를 언제 확인할지 설정해요.
+        마감 임박 알림 시간과 현재
+        기기의 푸시 알림을 설정해요.
       </p>
+
+      <PushNotificationControl />
 
       {isLoading ? (
         <p
@@ -50,7 +54,7 @@ function NotificationSettingsSection({
         </p>
       ) : (
         <form
-          className="mt-6"
+          className="mt-6 border-t border-[#1A1428]/10 pt-6"
           onSubmit={handleSubmit}
         >
           <div className="flex items-center justify-between gap-4 rounded-xl bg-[#F8F4EE] px-4 py-4">
