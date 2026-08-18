@@ -5,6 +5,9 @@ import useTasks from "../../hooks/useTasks";
 import { useGroupMembers } from "../../hooks/useGroupMember";
 import { rotationApi } from "../../api/rotationApi";
 import { getChoreIcon } from "../../utils/choreUtils";
+import searchIcon from "../../assets/icon/search_icon.svg";
+import fixIcon from "../../assets/icon/fix_icon.svg";
+import trashcanIcon from "../../assets/icon/trashcan_icon.svg";
 
 const extractMemberIds = (eligibility) => {
   if (!eligibility) return [];
@@ -93,25 +96,31 @@ export default function Task() {
   };
 
   return (
-    <div className="min-h-screen p-8 font-sans bg-[#F7F4EF]">
-      <div className="flex items-center justify-between max-w-4xl mx-auto mb-6">
+    <div className="min-h-screen p-4 sm:p-8 font-sans bg-[#F7F4EF]">
+      {/* 상단 헤더: 모바일 대응 (flex-col sm:flex-row) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between max-w-4xl mx-auto mb-6 gap-4">
         <div>
-          <p className="mb-2 text-sm text-gray-500">
+          <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-gray-500">
             반복과 담당자를 편하게 관리해요
           </p>
-          <h1 className="text-3xl font-extrabold text-gray-900">업무·관리</h1>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
+            업무·관리
+          </h1>
         </div>
         <button
           onClick={openAddModal}
-          className="px-6 py-3 font-bold text-white transition-colors bg-[#C8494C] rounded-full hover:bg-[#b84a4a]"
+          className="w-full sm:w-auto px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-white transition-colors bg-[#C8494C] rounded-full hover:bg-[#b84a4a] active:scale-[0.98]"
         >
           + 업무 추가
         </button>
       </div>
 
-      <div className="max-w-4xl mx-auto bg-white border border-gray-200 shadow-sm rounded-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <span className="text-sm font-bold text-gray-500">업무</span>
+      {/* 컨테이너 카드 */}
+      <div className="max-w-4xl mx-auto bg-white border border-gray-200 shadow-sm rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100">
+          <span className="text-xs sm:text-sm font-bold text-gray-500">
+            업무
+          </span>
           <div className="flex gap-4 text-sm font-bold text-gray-500"></div>
         </div>
 
@@ -131,63 +140,82 @@ export default function Task() {
               return (
                 <li
                   key={chore.choreId}
-                  className="flex flex-col px-6 py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50"
+                  className="flex flex-col px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <span className="text-2xl">
-                        {getChoreIcon(chore.name)}
-                      </span>
-                      <div>
-                        <h3 className="font-bold text-gray-900">
-                          {chore.name}
-                        </h3>
-                        <p className="text-xs text-gray-400">
+                  {/* 리스트 아이템 메인 행 */}
+                  <div className="flex items-center justify-between gap-2 sm:gap-4">
+                    {/* 좌측: 아이콘 & 업무 정보 */}
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                      <img
+                        src={getChoreIcon(chore.name)}
+                        alt=""
+                        className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">
+                            {chore.name}
+                          </h3>
+                          {/* 주기 태그 (모바일에서 이름 옆에 붙도록 설정) */}
+                          <span className="shrink-0 px-2 sm:px-3 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold text-gray-600 bg-gray-100 rounded-full">
+                            {chore.schedule?.frequency === "DAILY"
+                              ? "매일"
+                              : chore.schedule?.frequency === "WEEKLY"
+                                ? "매주"
+                                : "격주"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5 truncate">
                           마감: {dueTimeText} · 로테이션 {memberCountText}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span className="px-3 py-1 text-xs font-bold text-gray-600 bg-gray-100 rounded-full">
-                        {chore.schedule?.frequency === "DAILY"
-                          ? "매일"
-                          : chore.schedule?.frequency === "WEEKLY"
-                            ? "매주"
-                            : "격주"}
-                      </span>
+
+                    {/* 우측: 액션 버튼 그룹 */}
+                    <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                       <button
                         onClick={() => toggleRotation(chore)}
-                        className={`p-2 transition-colors ${expandedChoreId === chore.choreId ? "text-blue-500" : "text-gray-400 hover:text-blue-500"}`}
+                        className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
+                          expandedChoreId === chore.choreId
+                            ? "text-blue-500 bg-blue-50"
+                            : "text-gray-400 hover:text-blue-500 hover:bg-gray-100"
+                        }`}
+                        aria-label="로테이션 확인"
                       >
-                        🔍
+                        <img src={searchIcon} alt="" className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => openEditModal(chore)}
-                        className="p-2 text-gray-400 transition-colors hover:text-gray-600"
+                        className="p-1.5 sm:p-2 rounded-lg text-gray-400 transition-colors hover:text-gray-600 hover:bg-gray-100"
+                        aria-label="수정"
                       >
-                        ✏️
+                        <img src={fixIcon} alt="" className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() =>
                           handleDelete(chore.choreId, chore.version)
                         }
-                        className="p-2 text-gray-400 transition-colors hover:text-red-500"
+                        className="p-1.5 sm:p-2 rounded-lg text-gray-400 transition-colors hover:text-red-500 hover:bg-red-50"
+                        aria-label="삭제"
                       >
-                        🗑️
+                        <img src={trashcanIcon} alt="" className="h-5 w-5" />
                       </button>
                     </div>
                   </div>
 
+                  {/* 펼쳐지는 로테이션 순서 박스 */}
                   {expandedChoreId === chore.choreId && (
-                    <div className="p-4 mt-4 bg-[#FDF8E7] rounded-xl text-sm text-gray-700 animate-fade-in">
-                      <span className="mr-2 font-bold text-gray-900">
-                        🔄 로테이션 순서:
-                      </span>
-                      <span className="font-medium text-blue-600">
-                        {rotationMap[chore.choreId]
-                          ? rotationMap[chore.choreId].join(" → ")
-                          : "불러오는 중..."}
-                      </span>
+                    <div className="p-3 sm:p-4 mt-3 bg-[#FDF8E7] rounded-xl text-xs sm:text-sm text-gray-700 animate-fade-in">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                        <span className="font-bold text-gray-900 shrink-0">
+                          로테이션 순서:
+                        </span>
+                        <span className="font-medium text-blue-600 break-all">
+                          {rotationMap[chore.choreId]
+                            ? rotationMap[chore.choreId].join(" → ")
+                            : "불러오는 중..."}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </li>
@@ -195,7 +223,7 @@ export default function Task() {
             })}
           </ul>
         ) : (
-          <div className="py-16 text-center text-gray-400">
+          <div className="py-12 sm:py-16 text-center text-xs sm:text-sm text-gray-400">
             등록된 업무가 없습니다.
           </div>
         )}

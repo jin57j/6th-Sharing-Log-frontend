@@ -94,7 +94,7 @@ function Home() {
         <div>
           <p className="mb-2 text-sm text-[#888]">{today}</p>
           <h1 className="text-[28px] font-black text-[#222]">
-            안녕하세요 {greetingName}님 👋
+            안녕하세요 {greetingName}님 
           </h1>
         </div>
         <button
