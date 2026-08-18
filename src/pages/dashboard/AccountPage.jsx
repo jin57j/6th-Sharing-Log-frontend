@@ -13,7 +13,9 @@ import {
 import DeleteHouseModal from "../../components/account/DeleteHouseModal";
 import HouseInformationEditor from "../../components/account/HouseInformationEditor";
 import InformationRow from "../../components/account/InformationRow";
+
 import NicknameEditor from "../../components/account/NicknameEditor";
+import NotificationSettingsSection from "../../components/account/NotificationSettingsSection";
 import OtherSettingsSection from "../../components/account/OtherSettingsSection";
 import useLeaveHouse from "../../hooks/useLeaveHouse";
 
@@ -133,6 +135,15 @@ function AccountPage() {
               )}
             </div>
           </section>
+
+          {/* 개인 알림 설정 */}
+          {house?.groupPublicId && (
+            <NotificationSettingsSection
+              groupId={
+                house.groupPublicId
+              }
+            />
+          )}
 
           {/* 하우스 정보 */}
           <section className="rounded-2xl border border-[#1A1428]/10 bg-white p-6 shadow-sm">
