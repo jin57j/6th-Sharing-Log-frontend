@@ -13,7 +13,8 @@ async function handleResponse(response) {
 
   if (contentType.includes("json")) {
     try {
-      responseBody = await response.json();
+      responseBody =
+        await response.json();
     } catch {
       responseBody = null;
     }
@@ -42,22 +43,39 @@ function normalizeTime(time) {
 }
 
 // 백엔드 예약 응답을 기존 프론트 화면 형식으로 변경
-function normalizeReservation(reservation) {
+function normalizeReservation(
+  reservation,
+) {
+  // 백엔드는 현재 로그인한 사용자의 예약이면
+  // member.me를 true로 반환합니다.
   const isMine =
     reservation.member?.me === true;
+
+  // 예약자 닉네임을 우선 사용합니다.
+  //
+  // 닉네임이 없는 기존 사용자가 있을 수 있으므로
+  // 닉네임 → 이메일 → "멤버" 순서로 대체합니다.
+  const memberDisplayName =
+    reservation.member?.nickname?.trim() ||
+    reservation.member?.email ||
+    "멤버";
 
   return {
     ...reservation,
 
+    // 중첩된 member 객체에서 멤버십 ID를 꺼냅니다.
     memberId:
       reservation.member?.membershipId,
 
+    // 내 예약은 "나"로 표시하고,
+    // 다른 사용자의 예약은 닉네임으로 표시합니다.
     memberName: isMine
       ? "나"
-      : reservation.member?.email ?? "멤버",
+      : memberDisplayName,
 
     mine: isMine,
 
+    // 10:00:00 형식을 10:00 형식으로 변경합니다.
     startTime: normalizeTime(
       reservation.startTime,
     ),
@@ -69,7 +87,9 @@ function normalizeReservation(reservation) {
 }
 
 // 공간 목록 조회
-export async function getSpaces(groupId) {
+export async function getSpaces(
+  groupId,
+) {
   const response = await fetch(
     buildBackendUrl(
       `/api/groups/${encodeURIComponent(groupId)}/spaces`,
@@ -86,7 +106,7 @@ export async function getSpaces(groupId) {
   const responseBody =
     await handleResponse(response);
 
-  // 백엔드는 spaces가 아닌 items로 반환합니다.
+  // 백엔드는 공간 목록을 items에 담아서 반환합니다.
   return responseBody.items;
 }
 
@@ -104,7 +124,8 @@ export async function createSpace({
       method: "POST",
       credentials: "include",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
         Accept: "application/json",
 
         // 상태 변경 요청에 필요한 CSRF 토큰
@@ -172,7 +193,7 @@ export async function getReservations({
   const responseBody =
     await handleResponse(response);
 
-  // 백엔드는 reservations가 아닌 items로 반환합니다.
+  // 예약마다 백엔드 형식을 프론트 화면 형식으로 변경합니다.
   return responseBody.items.map(
     normalizeReservation,
   );
@@ -195,7 +216,8 @@ export async function createReservation({
       method: "POST",
       credentials: "include",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type":
+          "application/json",
         Accept: "application/json",
         [csrf.headerName]: csrf.token,
       },
@@ -210,7 +232,9 @@ export async function createReservation({
   const responseBody =
     await handleResponse(response);
 
-  return normalizeReservation(responseBody);
+  return normalizeReservation(
+    responseBody,
+  );
 }
 
 // 본인의 예약 취소
@@ -240,5 +264,7 @@ export async function cancelReservation({
   const responseBody =
     await handleResponse(response);
 
-  return normalizeReservation(responseBody);
+  return normalizeReservation(
+    responseBody,
+  );
 }
