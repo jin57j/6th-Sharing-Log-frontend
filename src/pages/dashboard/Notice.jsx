@@ -1,3 +1,5 @@
+// 현재는 안쓰는 페이지
+
 import { mockNotices } from "../../mocks/homeData";
 
 function NoticePage() {

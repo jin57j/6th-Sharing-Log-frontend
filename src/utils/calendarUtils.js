@@ -169,3 +169,97 @@ export function getPlanningLastDate(
 
   return exclusiveDate;
 }
+
+// 선택한 일정 범위에 맞는 업무만 남깁니다.
+export function filterCalendarOccurrences(
+  occurrences,
+  calendarTab,
+  actorMembershipId,
+) {
+  if (calendarTab === "all") {
+    return occurrences;
+  }
+
+  return occurrences.filter(
+    (occurrence) =>
+      occurrence.currentAssignee
+        ?.membershipId ===
+      actorMembershipId,
+  );
+}
+
+// 업무를 마감 날짜별로 묶어 달력에서 빠르게 조회할 수 있게 합니다.
+export function groupOccurrencesByDate(
+  occurrences,
+) {
+  const occurrenceMap = new Map();
+
+  occurrences.forEach(
+    (occurrence) => {
+      const dateKey =
+        getOccurrenceDateKey(
+          occurrence,
+        );
+
+      if (!dateKey) {
+        return;
+      }
+
+      const dateOccurrences =
+        occurrenceMap.get(dateKey) ??
+        [];
+
+      dateOccurrences.push(occurrence);
+      occurrenceMap.set(
+        dateKey,
+        dateOccurrences,
+      );
+    },
+  );
+
+  return occurrenceMap;
+}
+
+// 백엔드가 제공한 일정 범위를 기준으로 월 이동 가능 여부를 계산합니다.
+export function getCalendarMonthNavigation(
+  displayedMonth,
+  planningRange,
+) {
+  const planningStartDate =
+    parseDateKey(
+      planningRange?.fromInclusive,
+    );
+
+  const planningLastDate =
+    getPlanningLastDate(
+      planningRange?.toExclusive,
+    );
+
+  const displayedMonthNumber =
+    displayedMonth.year * 12 +
+    displayedMonth.month;
+
+  const firstPlanningMonthNumber =
+    planningStartDate
+      ? planningStartDate.getFullYear() *
+          12 +
+        planningStartDate.getMonth()
+      : displayedMonthNumber;
+
+  const lastPlanningMonthNumber =
+    planningLastDate
+      ? planningLastDate.getFullYear() *
+          12 +
+        planningLastDate.getMonth()
+      : displayedMonthNumber;
+
+  return {
+    canMovePrevious:
+      displayedMonthNumber >
+      firstPlanningMonthNumber,
+
+    canMoveNext:
+      displayedMonthNumber <
+      lastPlanningMonthNumber,
+  };
+}

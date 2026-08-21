@@ -7,6 +7,7 @@ import {
   formatChoreSchedule,
   getOccurrenceAssignee,
 } from "../../utils/rotationUtils";
+import { getChoreIcon } from "../../utils/choreUtils";
 
 export default function ChoreCategoryList({ chores, occurrences, onOpenCalendar }) {
   return (
@@ -46,6 +47,12 @@ export default function ChoreCategoryList({ chores, occurrences, onOpenCalendar 
                         : "border-b border-[#1A1428]/10"
                     }`}
                   >
+                    <span
+                      aria-hidden="true"
+                      className="w-10 shrink-0 text-center text-3xl leading-none"
+                    >
+                      {getChoreIcon(chore.name)}
+                    </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold">{chore.name}</p>
                       <p className="mt-1 text-xs text-[#8B8575]">

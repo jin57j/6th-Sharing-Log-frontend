@@ -24,22 +24,24 @@ function MemberItem({
 
   return (
     <article
-      className={`flex flex-wrap items-center gap-4 px-5 py-4 ${
+      className={`flex flex-nowrap items-center gap-2 px-3 py-4 sm:flex-wrap sm:gap-4 sm:px-5 ${
         isLastMember
           ? ""
           : "border-b border-[#1A1428]/10"
       }`}
     >
-      <MemberAvatar
-        name={member.displayName}
-        memberId={member.membershipId}
-        size="lg"
-        isOwner={isOwner}
-      />
+      <span className="order-1 sm:order-none">
+        <MemberAvatar
+          name={member.displayName}
+          memberId={member.membershipId}
+          size="responsiveLg"
+          isOwner={isOwner}
+        />
+      </span>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="truncate font-bold">
+      <div className="order-2 min-w-0 flex-1 sm:order-none">
+        <div className="flex flex-nowrap items-center gap-1 sm:flex-wrap sm:gap-2">
+          <p className="truncate text-sm font-bold sm:text-base">
             {member.displayName ||
               "이름 없는 멤버"}
           </p>
@@ -53,7 +55,7 @@ function MemberItem({
       </div>
 
       <span
-        className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold ${
+        className={`order-4 shrink-0 rounded-full px-2 py-1 text-[10px] font-bold sm:order-none sm:px-3 sm:py-1.5 sm:text-[11px] ${
           isOwner
             ? "bg-[#E63946]/10 text-[#E63946]"
             : "bg-[#EFEBE2] text-[#8B8575]"
@@ -63,13 +65,13 @@ function MemberItem({
       </span>
 
       {showManagementButtons && (
-        <div className="ml-16 flex w-full justify-end gap-2 sm:ml-0 sm:w-auto">
+        <div className="order-3 flex w-auto shrink-0 justify-end gap-1 sm:order-none sm:gap-2">
           {!isOwner && (
             <button
               type="button"
               onClick={() => onPromote(member)}
               disabled={isActionDisabled}
-              className="rounded-lg border border-[#1A1428]/15 bg-white px-3 py-2 text-xs font-bold text-[#1A1428] transition-colors hover:bg-[#EFEBE2] disabled:cursor-not-allowed disabled:opacity-50"
+              className="shrink-0 whitespace-nowrap rounded-lg border border-[#1A1428]/15 bg-white px-2 py-2 text-[11px] font-bold text-[#1A1428] transition-colors hover:bg-[#EFEBE2] disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:text-xs"
             >
               {isPromoting
                 ? "승격 중..."
@@ -81,7 +83,7 @@ function MemberItem({
             type="button"
             onClick={() => onRemove(member)}
             disabled={isActionDisabled}
-            className="rounded-lg border border-[#E63946]/30 bg-white px-3 py-2 text-xs font-bold text-[#E63946] transition-colors hover:bg-[#E63946] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            className="shrink-0 whitespace-nowrap rounded-lg border border-[#E63946]/30 bg-white px-2 py-2 text-[11px] font-bold text-[#E63946] transition-colors hover:bg-[#E63946] hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:text-xs"
           >
             {isRemoving
               ? "강퇴 중..."

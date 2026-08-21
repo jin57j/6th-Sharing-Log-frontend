@@ -1,5 +1,6 @@
 import googleIcon from "../../assets/images/google-g-logo.png";
 import naverLoginButton from "../../assets/images/naver-login-button.png";
+import AppIcon from "../../components/common/AppIcon";
 import useLoginSession from "../../hooks/useLoginSession";
 
 function LoginPage() {
@@ -37,12 +38,7 @@ function LoginPage() {
         {/* 서비스 소개 */}
         <header className="mb-8 text-center">
           <div className="mb-6 inline-flex items-center gap-2.5">
-            <span
-              className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E63946] text-2xl shadow-md"
-              aria-hidden="true"
-            >
-              🏠
-            </span>
+            <AppIcon className="h-12 w-12 drop-shadow-md" />
 
             <span className="font-display text-2xl font-black tracking-[-0.02em]">
               같이살기
@@ -133,39 +129,6 @@ function LoginPage() {
             동의하게 됩니다.
           </p>
         </section>
-
-        {/* 주요 기능 안내 */}
-        <ul className="mb-0 ml-0 mr-0 mt-6 flex list-none justify-center gap-5 p-0 text-xs text-[#8B8575]">
-          <li className="flex items-center gap-1.5">
-            <span
-              className="text-base text-[#06D6A0]"
-              aria-hidden="true"
-            >
-              ✓
-            </span>
-            자동 순환 배정
-          </li>
-
-          <li className="flex items-center gap-1.5">
-            <span
-              className="text-base text-[#06D6A0]"
-              aria-hidden="true"
-            >
-              ✓
-            </span>
-            대타 요청
-          </li>
-
-          <li className="flex items-center gap-1.5">
-            <span
-              className="text-base text-[#06D6A0]"
-              aria-hidden="true"
-            >
-              ✓
-            </span>
-            공간 예약
-          </li>
-        </ul>
       </div>
     </main>
   );
