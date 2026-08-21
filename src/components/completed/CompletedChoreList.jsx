@@ -45,11 +45,14 @@ export default function CompletedChoreList({ choreSummaries, onOpenCalendar }) {
                       : "border-b border-[#1A1428]/10"
                   }`}
                 >
-                  <img
-                    src={getChoreIcon(chore.name)}
-                    alt=""
-                    className="h-10 w-10 shrink-0"
-                  />
+                  <span
+                    aria-hidden="true"
+                    className="w-10 shrink-0 text-center text-3xl leading-none"
+                  >
+                    {getChoreIcon(
+                      chore.name,
+                    )}
+                  </span>
 
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{chore.name}</p>

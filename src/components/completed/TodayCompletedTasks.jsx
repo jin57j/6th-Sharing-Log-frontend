@@ -64,13 +64,14 @@ export default function TodayCompletedTasks({
                   className="flex items-center justify-between gap-3 rounded-xl bg-[#F8F4EE] p-3"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <img
-                      src={getChoreIcon(
+                    <span
+                      aria-hidden="true"
+                      className="w-10 shrink-0 text-center text-3xl leading-none"
+                    >
+                      {getChoreIcon(
                         occurrence.choreName,
                       )}
-                      alt=""
-                      className="h-10 w-10 shrink-0"
-                    />
+                    </span>
 
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold">

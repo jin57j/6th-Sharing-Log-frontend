@@ -25,11 +25,14 @@ export default function OccurrenceRecord({
   return (
     <article className="rounded-2xl border border-[#1A1428]/10 bg-white p-4 shadow-sm">
       <div className="flex items-start gap-3">
-        <img
-          src={getChoreIcon(occurrence.choreName)}
-          alt=""
-          className="h-11 w-11 shrink-0"
-        />
+        <span
+          aria-hidden="true"
+          className="w-11 shrink-0 text-center text-[34px] leading-none"
+        >
+          {getChoreIcon(
+            occurrence.choreName,
+          )}
+        </span>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -60,22 +63,20 @@ export default function OccurrenceRecord({
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-[#F8F4EE] p-3">
-        <MemberInformation
-          label="최초 담당자"
-          member={occurrence.originalAssignee}
-        />
-
-        <MemberInformation
-          label={isCompleted ? "실제 완료자" : "현재 담당자"}
-          member={actualMember}
-        />
-      </div>
-
       {isSubstitute && (
-        <p className="mt-3 rounded-xl bg-[#E63946]/5 px-3 py-2 text-xs font-semibold leading-5 text-[#E63946]">
-          최초 담당자와 실제 완료자가 달라 대타로 완료된 업무예요.
-        </p>
+        <>
+          <div className="mt-4 grid grid-cols-2 gap-3 rounded-2xl bg-[#F8F4EE] p-3">
+            <MemberInformation
+              label="최초 담당자"
+              member={occurrence.originalAssignee}
+            />
+
+            <MemberInformation
+              label="실제 완료자"
+              member={actualMember}
+            />
+          </div>
+        </>
       )}
 
       {(hasAction(occurrence, "COMPLETE") ||

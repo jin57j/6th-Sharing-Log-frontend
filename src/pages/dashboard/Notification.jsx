@@ -7,7 +7,7 @@ import SubstituteRequestCard from "../../components/notification/SubstituteReque
 
 function EmptyMessage({ children }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[#1A1428]/15 bg-white/60 px-5 py-10 text-center text-sm text-[#8B8575]">
+    <div className="rounded-[20px] border border-gray-100 bg-white px-5 py-10 text-center text-sm font-bold text-gray-500 shadow-sm">
       {children}
     </div>
   );

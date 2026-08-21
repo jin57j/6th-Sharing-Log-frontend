@@ -43,7 +43,7 @@ self.addEventListener(
         payload.body ??
         "새로운 알림이 도착했습니다.",
 
-      icon: "/favicon.svg",
+      icon: "/icons/app-icon-192.png",
 
       data: {
         url:

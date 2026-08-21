@@ -5,63 +5,12 @@ import {
 
 import {
   getNotificationPreferences,
-  getNotificationSettings,
   updateNotificationPreferences,
-  updateNotificationSettings,
 } from "../api/notificationApi";
 
-const DEFAULT_FORM = {
-  dueSoonEnabled: true,
-  dailyHoursBeforeDue: "5",
-  weeklyHoursBeforeDue: "5",
-  biweeklyHoursBeforeDue: "5",
-};
-
-const HOUR_LIMITS = [
-  {
-    name: "dailyHoursBeforeDue",
-    label: "매일",
-    min: 1,
-    max: 24,
-  },
-  {
-    name: "weeklyHoursBeforeDue",
-    label: "매주",
-    min: 1,
-    max: 168,
-  },
-  {
-    name: "biweeklyHoursBeforeDue",
-    label: "격주",
-    min: 1,
-    max: 336,
-  },
-];
-
-function validateNotificationHours(
-  form,
-) {
-  for (const limit of HOUR_LIMITS) {
-    const value =
-      Number(form[limit.name]);
-
-    if (
-      !Number.isInteger(value) ||
-      value < limit.min ||
-      value > limit.max
-    ) {
-      return `${limit.label} 업무 알림 시간은 ${limit.min}시간 이상 ${limit.max}시간 이하로 입력해 주세요.`;
-    }
-  }
-
-  return "";
-}
-
-export default function useNotificationSettings(
-  groupId,
-) {
-  const [form, setForm] =
-    useState(DEFAULT_FORM);
+export default function useNotificationSettings() {
+  const [dueSoonEnabled, setDueSoonEnabled] =
+    useState(true);
 
   const [isLoading, setIsLoading] =
     useState(true);
@@ -69,66 +18,29 @@ export default function useNotificationSettings(
   const [isSaving, setIsSaving] =
     useState(false);
 
-  const [
-    errorMessage,
-    setErrorMessage,
-  ] = useState("");
+  const [errorMessage, setErrorMessage] =
+    useState("");
 
-  const [
-    successMessage,
-    setSuccessMessage,
-  ] = useState("");
+  const [successMessage, setSuccessMessage] =
+    useState("");
 
   useEffect(() => {
-    if (!groupId) {
-      return undefined;
-    }
-
     let cancelled = false;
 
-    async function loadSettings() {
+    async function loadPreferences() {
       try {
         setIsLoading(true);
         setErrorMessage("");
         setSuccessMessage("");
 
-        const [
-          preferences,
-          settings,
-        ] = await Promise.all([
-          getNotificationPreferences(),
-          getNotificationSettings(
-            groupId,
-          ),
-        ]);
+        const preferences =
+          await getNotificationPreferences();
 
-        if (cancelled) {
-          return;
+        if (!cancelled) {
+          setDueSoonEnabled(
+            preferences?.dueSoonEnabled ?? true,
+          );
         }
-
-        setForm({
-          dueSoonEnabled:
-            preferences?.dueSoonEnabled ??
-            true,
-
-          dailyHoursBeforeDue:
-            String(
-              settings?.dailyHoursBeforeDue ??
-                5,
-            ),
-
-          weeklyHoursBeforeDue:
-            String(
-              settings?.weeklyHoursBeforeDue ??
-                5,
-            ),
-
-          biweeklyHoursBeforeDue:
-            String(
-              settings?.biweeklyHoursBeforeDue ??
-                5,
-            ),
-        });
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(
@@ -143,35 +55,17 @@ export default function useNotificationSettings(
       }
     }
 
-    loadSettings();
+    loadPreferences();
 
     return () => {
       cancelled = true;
     };
-  }, [groupId]);
+  }, []);
 
   function handleToggle() {
-    setForm((currentForm) => ({
-      ...currentForm,
-
-      dueSoonEnabled:
-        !currentForm.dueSoonEnabled,
-    }));
-
-    setErrorMessage("");
-    setSuccessMessage("");
-  }
-
-  function handleHoursChange(event) {
-    const {
-      name,
-      value,
-    } = event.target;
-
-    setForm((currentForm) => ({
-      ...currentForm,
-      [name]: value,
-    }));
+    setDueSoonEnabled((currentValue) =>
+      !currentValue,
+    );
 
     setErrorMessage("");
     setSuccessMessage("");
@@ -180,81 +74,24 @@ export default function useNotificationSettings(
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (!groupId || isSaving) {
+    if (isSaving) {
       return;
     }
-
-    const validationMessage =
-      validateNotificationHours(form);
-
-    if (validationMessage) {
-      setErrorMessage(
-        validationMessage,
-      );
-
-      return;
-    }
-
-    const dailyHoursBeforeDue =
-      Number(
-        form.dailyHoursBeforeDue,
-      );
-
-    const weeklyHoursBeforeDue =
-      Number(
-        form.weeklyHoursBeforeDue,
-      );
-
-    const biweeklyHoursBeforeDue =
-      Number(
-        form.biweeklyHoursBeforeDue,
-      );
 
     try {
       setIsSaving(true);
       setErrorMessage("");
       setSuccessMessage("");
 
-      const [
-        preferences,
-        settings,
-      ] = await Promise.all([
-        updateNotificationPreferences({
-          dueSoonEnabled:
-            form.dueSoonEnabled,
-        }),
+      const preferences =
+        await updateNotificationPreferences({
+          dueSoonEnabled,
+        });
 
-        updateNotificationSettings({
-          groupId,
-          dailyHoursBeforeDue,
-          weeklyHoursBeforeDue,
-          biweeklyHoursBeforeDue,
-        }),
-      ]);
-
-      setForm({
-        dueSoonEnabled:
-          preferences?.dueSoonEnabled ??
-          form.dueSoonEnabled,
-
-        dailyHoursBeforeDue:
-          String(
-            settings?.dailyHoursBeforeDue ??
-              dailyHoursBeforeDue,
-          ),
-
-        weeklyHoursBeforeDue:
-          String(
-            settings?.weeklyHoursBeforeDue ??
-              weeklyHoursBeforeDue,
-          ),
-
-        biweeklyHoursBeforeDue:
-          String(
-            settings?.biweeklyHoursBeforeDue ??
-              biweeklyHoursBeforeDue,
-          ),
-      });
+      setDueSoonEnabled(
+        preferences?.dueSoonEnabled ??
+          dueSoonEnabled,
+      );
 
       setSuccessMessage(
         "알림 설정을 저장했습니다.",
@@ -278,14 +115,12 @@ export default function useNotificationSettings(
   }
 
   return {
-    form,
+    dueSoonEnabled,
     isLoading,
     isSaving,
     errorMessage,
     successMessage,
-    hourLimits: HOUR_LIMITS,
     handleToggle,
-    handleHoursChange,
     handleSubmit,
   };
 }

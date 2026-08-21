@@ -146,11 +146,12 @@ export default function Task() {
                   <div className="flex items-center justify-between gap-2 sm:gap-4">
                     {/* 좌측: 아이콘 & 업무 정보 */}
                     <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                      <img
-                        src={getChoreIcon(chore.name)}
-                        alt=""
-                        className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
-                      />
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 text-3xl leading-none sm:text-[34px]"
+                      >
+                        {getChoreIcon(chore.name)}
+                      </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-bold text-gray-900 text-sm sm:text-base truncate">

@@ -114,7 +114,11 @@ function SidebarPanel({
       } flex-col border-r border-[#1A1428]/10 bg-white p-4`}
     >
       <div className="flex items-center justify-between px-2 py-2">
-        <Logo />
+        <Logo
+          onClick={
+            mobile ? onClose : undefined
+          }
+        />
 
         {mobile && (
           <button

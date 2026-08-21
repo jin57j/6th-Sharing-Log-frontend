@@ -142,7 +142,7 @@ function ChoreCalendarView({
                 : "text-[#8B8575]"
             }`}
           >
-            내 일정만 보기
+            내 일정만
           </button>
 
           <button
