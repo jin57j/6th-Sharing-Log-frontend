@@ -7,22 +7,16 @@ import useNotificationSettings from "../../hooks/useNotificationSettings";
 
 import PushNotificationControl from "./PushNotificationControl";
 
-function NotificationSettingsSection({
-  groupId,
-}) {
+function NotificationSettingsSection() {
   const {
-    form,
+    dueSoonEnabled,
     isLoading,
     isSaving,
     errorMessage,
     successMessage,
-    hourLimits,
     handleToggle,
-    handleHoursChange,
     handleSubmit,
-  } = useNotificationSettings(
-    groupId,
-  );
+  } = useNotificationSettings();
 
   return (
     <section className="rounded-2xl border border-[#1A1428]/10 bg-white p-6 shadow-sm">
@@ -38,8 +32,8 @@ function NotificationSettingsSection({
       </div>
 
       <p className="mt-1 text-sm leading-6 text-[#8B8575]">
-        마감 임박 알림 시간과 현재
-        기기의 푸시 알림을 설정해요.
+        마감 임박 알림과 현재 기기의
+        푸시 알림을 설정해요.
       </p>
 
       <PushNotificationControl />
@@ -72,21 +66,19 @@ function NotificationSettingsSection({
             <button
               type="button"
               role="switch"
-              aria-checked={
-                form.dueSoonEnabled
-              }
+              aria-checked={dueSoonEnabled}
               aria-label="마감 임박 알림 사용 여부"
               disabled={isSaving}
               onClick={handleToggle}
               className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-                form.dueSoonEnabled
+                dueSoonEnabled
                   ? "bg-[#E63946]"
                   : "bg-[#C9C5BD]"
               } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               <span
                 className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
-                  form.dueSoonEnabled
+                  dueSoonEnabled
                     ? "left-6"
                     : "left-1"
                 }`}
@@ -95,7 +87,7 @@ function NotificationSettingsSection({
             </button>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 rounded-xl border border-[#1A1428]/10 px-4 py-4">
             <div className="flex items-center gap-2">
               <Clock3
                 size={18}
@@ -103,57 +95,16 @@ function NotificationSettingsSection({
               />
 
               <h3 className="font-black">
-                기본 알림 시간
+                마감 임박 알림 시간
               </h3>
             </div>
 
-            <p className="mt-1 text-xs leading-5 text-[#8B8575]">
-              반복 주기별로 마감 몇
-              시간 전부터 임박 업무로
-              확인할지 설정해요.
+            <p className="mt-2 text-sm leading-6 text-[#8B8575]">
+              담당 업무의 마감 24시간
+              전과 3시간 전에 알림을
+              보내드려요.
             </p>
-
-            <div className="mt-4 space-y-3">
-              {hourLimits.map(
-                (limit) => (
-                  <label
-                    key={limit.name}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-[#1A1428]/10 px-4 py-3"
-                  >
-                    <span className="text-sm font-bold">
-                      {limit.label} 업무
-                    </span>
-
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        name={limit.name}
-                        value={
-                          form[limit.name]
-                        }
-                        min={limit.min}
-                        max={limit.max}
-                        step="1"
-                        disabled={isSaving}
-                        onChange={
-                          handleHoursChange
-                        }
-                        className="w-20 rounded-lg border border-[#1A1428]/15 bg-white px-3 py-2 text-right text-sm font-bold outline-none transition focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/15 disabled:cursor-not-allowed disabled:bg-[#F8F4EE]"
-                      />
-
-                      <span className="w-12 text-xs font-semibold text-[#8B8575]">
-                        시간 전
-                      </span>
-                    </span>
-                  </label>
-                ),
-              )}
-            </div>
           </div>
-
-          <p className="mt-4 rounded-xl bg-[#FFB703]/10 px-4 py-3 text-xs leading-5 text-[#8B6A00]">
-            아직 실제 푸시 시간과 연동 안됨
-          </p>
 
           {errorMessage && (
             <p
@@ -175,10 +126,7 @@ function NotificationSettingsSection({
 
           <button
             type="submit"
-            disabled={
-              isSaving ||
-              !groupId
-            }
+            disabled={isSaving}
             className="mt-5 w-full rounded-xl bg-[#E63946] px-6 py-3.5 text-sm font-bold text-white transition hover:brightness-95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isSaving

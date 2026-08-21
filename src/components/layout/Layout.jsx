@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Outlet } from "react-router";
 
 import useCurrentProfile from "../../hooks/useCurrentProfile";
@@ -6,6 +7,11 @@ import BottomNavigationBar from "./BottomNavigationBar";
 import Sidebar from "./Sidebar";
 
 function Layout() {
+  const [
+    isMobileMenuOpen,
+    setIsMobileMenuOpen,
+  ] = useState(false);
+
   // 사용자 정보와 현재 참여 중인 하우스 정보를 조회합니다.
   const profile = useCurrentProfile();
 
@@ -19,9 +25,17 @@ function Layout() {
       groupId={groupId}
     >
       <div className="flex h-dvh w-full overflow-hidden bg-[#F8F4EE]">
-        <Sidebar profile={profile} />
+        <Sidebar
+          profile={profile}
+          isMobileMenuOpen={
+            isMobileMenuOpen
+          }
+          onCloseMobileMenu={() =>
+            setIsMobileMenuOpen(false)
+          }
+        />
 
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-20 pt-16 lg:pb-0 lg:pt-0">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto pb-16 pt-14 lg:pb-0 lg:pt-0">
           <Outlet
             context={{
               profile,
@@ -30,7 +44,12 @@ function Layout() {
           />
         </main>
 
-        <BottomNavigationBar />
+        <BottomNavigationBar
+          isMenuOpen={isMobileMenuOpen}
+          onOpenMenu={() =>
+            setIsMobileMenuOpen(true)
+          }
+        />
       </div>
     </NotificationProvider>
   );

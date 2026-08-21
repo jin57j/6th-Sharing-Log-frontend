@@ -10,6 +10,8 @@ const SIZE_STYLES = {
   sm: "h-7 w-7 text-[10px]",
   md: "h-9 w-9 text-xs",
   lg: "h-12 w-12 text-base",
+  responsiveLg:
+    "h-9 w-9 text-xs sm:h-12 sm:w-12 sm:text-base",
 };
 
 const OWNER_BADGE_STYLES = {
@@ -17,6 +19,7 @@ const OWNER_BADGE_STYLES = {
   sm: "h-4 w-4",
   md: "h-4 w-4",
   lg: "h-5 w-5",
+  responsiveLg: "h-4 w-4 sm:h-5 sm:w-5",
 };
 
 function MemberAvatar({

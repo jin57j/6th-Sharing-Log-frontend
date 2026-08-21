@@ -69,3 +69,13 @@ export function sortMembers(members) {
     },
   );
 }
+
+// 닉네임에 검색어가 포함된 멤버만 반환합니다.
+export function filterMembersByKeyword(members, searchKeyword) {
+  const normalizedSearchKeyword = searchKeyword.trim().toLowerCase();
+
+  return members.filter((member) => {
+    const displayName = member.displayName?.trim().toLowerCase() ?? "";
+    return displayName.includes(normalizedSearchKeyword);
+  });
+}

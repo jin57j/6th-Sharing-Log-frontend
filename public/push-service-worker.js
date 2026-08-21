@@ -36,14 +36,14 @@ self.addEventListener(
     }
 
     const title =
-      payload.title ?? "Sharing Log";
+      payload.title ?? "같이살기";
 
     const options = {
       body:
         payload.body ??
         "새로운 알림이 도착했습니다.",
 
-      icon: "/favicon.svg",
+      icon: "/icons/app-icon-192.png",
 
       data: {
         url:

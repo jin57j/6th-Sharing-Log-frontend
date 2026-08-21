@@ -48,7 +48,12 @@ function TaskCard({ task, onComplete, onRequestSubstitute }) {
     >
       {/* 상단: 아이콘 & 남은 시간 배지 */}
       <div className="flex items-start justify-between mb-3 sm:mb-4">
-        <img src={icon} alt="" className="h-11 w-11 sm:h-14 sm:w-14 shrink-0" />
+        <span
+          aria-hidden="true"
+          className="shrink-0 text-[36px] leading-none sm:text-[44px]"
+        >
+          {icon}
+        </span>
 
         <div
           className={`px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs sm:text-[13px] font-bold flex items-center gap-1.5 shrink-0 ${

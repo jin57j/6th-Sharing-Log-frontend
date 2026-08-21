@@ -1,8 +1,8 @@
 import {
-  Calendar,
   CalendarDays,
-  ClipboardList,
+  CheckCircle2,
   Home,
+  Menu,
   RotateCcw,
 } from "lucide-react";
 import { NavLink } from "react-router";
@@ -19,18 +19,13 @@ const menuItems = [
     icon: RotateCcw,
   },
   {
-    to: "/calendar",
-    label: "달력",
-    icon: Calendar,
-  },
-  {
-    to: "/task",
-    label: "일정",
-    icon: ClipboardList,
+    to: "/completed-tasks",
+    label: "완료업무",
+    icon: CheckCircle2,
   },
   {
     to: "/reservation",
-    label: "공간 예약",
+    label: "공간예약",
     icon: CalendarDays,
   },
 ];
@@ -44,7 +39,7 @@ function NavItem({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-[9px] font-bold transition-colors ${
+        `flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-sans text-[9px] font-bold transition-colors ${
           isActive
             ? "text-[#E63946]"
             : "text-[#8B8575] hover:text-[#1A1428]"
@@ -68,7 +63,34 @@ function NavItem({
   );
 }
 
-function BottomNavigationBar() {
+function AllMenuButton({
+  isActive,
+  onClick,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label="전체 메뉴 열기"
+      aria-pressed={isActive}
+      className="flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 py-1.5 font-sans text-[9px] font-bold text-[#1A1428] transition-colors"
+    >
+      <Menu
+        size={20}
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
+      <span className="text-[9px] leading-normal">
+        전체메뉴
+      </span>
+    </button>
+  );
+}
+
+function BottomNavigationBar({
+  isMenuOpen,
+  onOpenMenu,
+}) {
   return (
     <nav
       aria-label="모바일 하단 메뉴"
@@ -81,6 +103,11 @@ function BottomNavigationBar() {
             {...item}
           />
         ))}
+
+        <AllMenuButton
+          isActive={isMenuOpen}
+          onClick={onOpenMenu}
+        />
       </div>
     </nav>
   );
