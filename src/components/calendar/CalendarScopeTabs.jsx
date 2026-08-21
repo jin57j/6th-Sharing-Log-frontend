@@ -1,6 +1,7 @@
 function CalendarScopeTabs({
   calendarTab,
   onChange,
+  mineLabel = "내 일정",
 }) {
   return (
     <div className="mt-5 flex rounded-2xl bg-[#EFEBE2] p-1.5">
@@ -13,7 +14,7 @@ function CalendarScopeTabs({
             : "text-[#8B8575]"
         }`}
       >
-        내 일정
+        {mineLabel}
       </button>
 
       <button
