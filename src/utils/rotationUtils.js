@@ -63,6 +63,36 @@ export function findCurrentOccurrence(occurrences) {
   return assignedOccurrence ?? sortedOccurrences[0] ?? null;
 }
 
+// 선택한 업무의 회차를 마감 시간순으로 반환합니다.
+export function getChoreOccurrences(occurrences, choreId) {
+  if (!choreId) {
+    return [];
+  }
+
+  return occurrences
+    .filter((occurrence) => occurrence.choreId === choreId)
+    .sort(
+      (first, second) =>
+        new Date(first.dueAt) - new Date(second.dueAt),
+    );
+}
+
+// 선택한 달력 범위에 맞는 업무 회차만 반환합니다.
+export function filterChoreOccurrencesByScope(
+  occurrences,
+  calendarTab,
+  actorMembershipId,
+) {
+  if (calendarTab === "all") {
+    return occurrences;
+  }
+
+  return occurrences.filter(
+    (occurrence) =>
+      getOccurrenceAssignee(occurrence)?.membershipId === actorMembershipId,
+  );
+}
+
 // 주차별 담당자 로테이션 계산 함수
 export const getAssignee = (task, weekIndex) => {
   // 실제 데이터 구조인 eligibility.members 배열을 참조하도록 변경

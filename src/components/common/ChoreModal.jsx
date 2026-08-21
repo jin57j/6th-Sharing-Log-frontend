@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useGroupMembers } from "../../hooks/useGroupMember";
+import { extractEligibilityMemberIds } from "../../utils/choreUtils";
 
 const avatarColors = [
   "bg-red-400",
@@ -8,23 +9,6 @@ const avatarColors = [
   "bg-blue-400",
   "bg-purple-400",
 ];
-
-// 🌟 백엔드 응답에서 ID만 안전하게 추출하는 유틸 함수
-const extractMemberIds = (eligibility) => {
-  if (!eligibility) return [];
-  if (
-    Array.isArray(eligibility.membershipIds) &&
-    eligibility.membershipIds.length > 0
-  ) {
-    return eligibility.membershipIds;
-  }
-  if (Array.isArray(eligibility.members)) {
-    return eligibility.members.map((m) =>
-      typeof m === "object" ? m.membershipId : m,
-    );
-  }
-  return [];
-};
 
 export default function ChoreModal({
   isOpen,
@@ -63,7 +47,11 @@ export default function ChoreModal({
         if (initialData.eligibility?.mode === "ALL_ACTIVE_MEMBERS") {
           setSelectedIds(memberList.map((m) => m.membershipId));
         } else {
-          setSelectedIds(extractMemberIds(initialData.eligibility));
+          setSelectedIds(
+            extractEligibilityMemberIds(
+              initialData.eligibility,
+            ),
+          );
         }
       } else {
         setSelectedIds(memberList.map((m) => m.membershipId));

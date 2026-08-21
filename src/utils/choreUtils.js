@@ -122,3 +122,78 @@ export const getChoreIcon = (
 
   return matchedRule?.icon ?? "📝";
 };
+
+export function extractEligibilityMemberIds(
+  eligibility,
+) {
+  if (!eligibility) {
+    return [];
+  }
+
+  if (
+    Array.isArray(
+      eligibility.membershipIds,
+    ) &&
+    eligibility.membershipIds
+      .length > 0
+  ) {
+    return eligibility.membershipIds;
+  }
+
+  if (
+    Array.isArray(
+      eligibility.members,
+    )
+  ) {
+    return eligibility.members.map(
+      (member) =>
+        typeof member === "object"
+          ? member.membershipId
+          : member,
+    );
+  }
+
+  return [];
+}
+
+export function getChoreMemberCountText(
+  eligibility,
+  members,
+) {
+  if (
+    eligibility?.mode ===
+    "ALL_ACTIVE_MEMBERS"
+  ) {
+    const memberCount = Array.isArray(
+      members,
+    )
+      ? members.length
+      : members?.items?.length || 0;
+
+    return `${memberCount}명`;
+  }
+
+  return `${extractEligibilityMemberIds(eligibility).length}명`;
+}
+
+export function getChoreFrequencyLabel(
+  frequency,
+) {
+  if (frequency === "DAILY") {
+    return "매일";
+  }
+
+  if (frequency === "WEEKLY") {
+    return "매주";
+  }
+
+  return "격주";
+}
+
+export function formatChoreDueTime(
+  dueTime,
+) {
+  return dueTime
+    ? dueTime.slice(0, 5)
+    : "미정";
+}
