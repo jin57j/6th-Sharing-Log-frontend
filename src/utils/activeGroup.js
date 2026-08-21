@@ -1,5 +1,5 @@
 const ACTIVE_GROUP_ID_KEY =
-  "sharing-log-active-group-id";
+  "gachi-salgi-active-group-id";
 
 // 브라우저에 저장한 현재 하우스 ID를 가져옵니다.
 export function getSavedActiveGroupId() {

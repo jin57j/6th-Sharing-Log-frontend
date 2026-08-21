@@ -18,7 +18,7 @@ export const BACKEND_ORIGIN = backendOrigin.replace(/\/+$/, "");
 //
 // 예시:
 // buildBackendUrl("/api/auth/me")
-// → https://sharinglog-43-200-12-73.sslip.io/api/auth/me
+// → https://backend.example.com/api/auth/me
 export function buildBackendUrl(path) {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 

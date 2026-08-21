@@ -36,7 +36,7 @@ self.addEventListener(
     }
 
     const title =
-      payload.title ?? "Sharing Log";
+      payload.title ?? "같이살기";
 
     const options = {
       body:

@@ -10,6 +10,7 @@ import {
 import { getMyGroups } from "../../api/groupApi";
 import OnboardingShell from "../../components/OnboardingShell";
 import { saveActiveGroupId } from "../../utils/activeGroup";
+import { getHouseEmoji } from "../../utils/houseIcon";
 
 function SelectHousePage() {
   const navigate = useNavigate();
@@ -82,13 +83,6 @@ function SelectHousePage() {
     <OnboardingShell>
       <div className="relative w-full max-w-sm">
         <header className="mb-7 text-center">
-          <div
-            className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#E63946] text-2xl shadow-md"
-            aria-hidden="true"
-          >
-            🏠
-          </div>
-
           <h1 className="font-display text-2xl font-black tracking-[-0.03em]">
             하우스를 선택해 주세요
           </h1>
@@ -142,7 +136,7 @@ function SelectHousePage() {
                       className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[#EFEBE2] text-xl"
                       aria-hidden="true"
                     >
-                      🏡
+                      {getHouseEmoji(group.groupPublicId)}
                     </span>
 
                     <span className="min-w-0 flex-1">
