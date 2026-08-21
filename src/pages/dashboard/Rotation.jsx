@@ -210,7 +210,7 @@ function Rotation() {
             />
             <p className="mt-3 text-sm font-bold">아직 등록된 업무가 없어요.</p>
             <p className="mt-1 text-xs text-[#8B8575]">
-              업무·일정 화면에서 반복 업무를 추가해 주세요.
+              업무 관리 화면에서 반복 업무를 추가해 주세요.
             </p>
           </div>
         )}

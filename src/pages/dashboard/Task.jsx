@@ -104,7 +104,7 @@ export default function Task() {
             반복과 담당자를 편하게 관리해요
           </p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900">
-            업무·관리
+            업무 관리
           </h1>
         </div>
         <button
