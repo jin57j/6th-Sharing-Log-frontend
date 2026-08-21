@@ -1,6 +1,5 @@
 import {
   BellRing,
-  Calendar,
   CalendarDays,
   CheckCircle2,
   ClipboardList,
@@ -27,14 +26,9 @@ export const PRIMARY_MENU_ITEMS = [
     icon: ClipboardList,
   },
   {
-    to: "/calendar",
-    label: "달력",
-    icon: Calendar,
-  },
-  {
-    to: "/members",
-    label: "멤버",
-    icon: Users,
+    to: "/completed-tasks",
+    label: "완료 업무",
+    icon: CheckCircle2,
   },
   {
     to: "/reservation",
@@ -45,15 +39,15 @@ export const PRIMARY_MENU_ITEMS = [
 
 export const SECONDARY_MENU_ITEMS = [
   {
+    to: "/members",
+    label: "멤버",
+    icon: Users,
+  },
+  {
     to: "/notification",
     label: "알림",
     icon: BellRing,
     badge: 0,
-  },
-  {
-    to: "/completed-tasks",
-    label: "완료 업무",
-    icon: CheckCircle2,
   },
   {
     to: "/settings",

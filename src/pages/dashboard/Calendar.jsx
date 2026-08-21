@@ -3,7 +3,6 @@ import {
   useState,
 } from "react";
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,7 +21,7 @@ import {
   parseDateKey,
 } from "../../utils/calendarUtils";
 
-function Calendar() {
+function Calendar({ embedded = false }) {
   const { activeGroup } =
     useOutletContext();
 
@@ -224,22 +223,38 @@ function Calendar() {
   }
 
   return (
-    <div className="min-h-full text-[#1A1428]">
-      <div className="mx-auto max-w-2xl p-5 pb-8 sm:p-8">
-        {/* 페이지 제목 */}
-        <header>
-          <p className="text-sm text-[#8B8575]">
-            {houseName}의 로테이션 업무
-            일정
-          </p>
+    <div
+      id={embedded ? "home-calendar" : undefined}
+      className={
+        embedded
+          ? "mb-12 text-[#1A1428]"
+          : "min-h-full text-[#1A1428]"
+      }
+    >
+      <div
+        className={
+          embedded
+            ? ""
+            : "mx-auto max-w-2xl p-5 pb-8 sm:p-8"
+        }
+      >
 
-          <h1 className="mt-1 flex items-center gap-2 font-display text-[30px] font-black tracking-[-0.03em]">
-            <CalendarDays
-              size={28}
-              aria-hidden="true"
-            />
-            달력
-          </h1>
+        {/* 페이지 제목 */}
+        <header className="mb-5 flex items-end justify-between">
+          <div>
+            <h2
+              className={`mb-1 flex items-center gap-1.5 font-bold ${
+                embedded
+                  ? "text-xl"
+                  : "text-lg"
+              }`}
+            >
+              달력
+            </h2>
+            <p className="text-[13px] text-[#888]">
+              {houseName}의 업무 일정
+            </p>
+          </div>
         </header>
 
         {/* 내 일정만 / 전체 일정 탭 */}
@@ -255,7 +270,7 @@ function Calendar() {
                 : "text-[#8B8575]"
             }`}
           >
-            내 일정만
+            내 일정
           </button>
 
           <button

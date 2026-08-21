@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { NavLink } from "react-router";
 import {
   ArrowLeftRight,
   LogOut,
-  Menu,
   X,
 } from "lucide-react";
 
@@ -76,27 +74,10 @@ function SidebarMenuItem({
 }
 
 // 모바일에서만 표시되는 상단 헤더
-function MobileHeader({ onOpenMenu }) {
+function MobileHeader() {
   return (
-    <header className="fixed inset-x-0 top-0 z-40 flex h-16 items-center justify-between border-b border-[#1A1428]/10 bg-white px-5 lg:hidden">
-      <button
-        type="button"
-        onClick={onOpenMenu}
-        aria-label="메뉴 열기"
-        className="rounded-lg p-1.5 text-[#1A1428] transition-colors hover:bg-[#EFEBE2]"
-      >
-        <Menu
-          size={20}
-          aria-hidden="true"
-        />
-      </button>
-
+    <header className="fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-center border-b border-[#1A1428]/10 bg-white px-5 lg:hidden">
       <Logo />
-
-      <span
-        className="h-8 w-8"
-        aria-hidden="true"
-      />
     </header>
   );
 }
@@ -168,10 +149,6 @@ function SidebarPanel({
       </div>
 
       <div className="mt-7 border-t border-[#1A1428]/10 pt-5">
-        <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8B8575]">
-          더보기
-        </p>
-
         <div className="space-y-1">
           {SECONDARY_MENU_ITEMS.map(
             (item) => (
@@ -257,12 +234,9 @@ function SidebarPanel({
 
 export default function Sidebar({
   profile,
+  isMobileMenuOpen,
+  onCloseMobileMenu,
 }) {
-  const [
-    isMobileMenuOpen,
-    setIsMobileMenuOpen,
-  ] = useState(false);
-
   const {
     handleLogout,
     isLoggingOut,
@@ -280,9 +254,7 @@ export default function Sidebar({
 
   // 로그아웃한 다음 모바일 메뉴도 닫습니다.
   function onLogout() {
-    handleLogout(() => {
-      setIsMobileMenuOpen(false);
-    });
+    handleLogout(onCloseMobileMenu);
   }
 
   const profileProps = {
@@ -305,33 +277,21 @@ export default function Sidebar({
       />
 
       {/* 모바일 상단 헤더 */}
-      <MobileHeader
-        onOpenMenu={() => {
-          setIsMobileMenuOpen(true);
-        }}
-      />
+      <MobileHeader />
 
       {/* 모바일 사이드바 */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(
-                false,
-              );
-            }}
+            onClick={onCloseMobileMenu}
             aria-label="메뉴 닫기"
             className="absolute inset-0 bg-[#1A1428]/25"
           />
 
           <SidebarPanel
             mobile
-            onClose={() => {
-              setIsMobileMenuOpen(
-                false,
-              );
-            }}
+            onClose={onCloseMobileMenu}
             onLogout={onLogout}
             isLoggingOut={
               isLoggingOut
